@@ -7,7 +7,7 @@ export function MetricsBar() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section style={{ backgroundColor: "var(--color-surface)" }} className="py-14">
+    <section className="py-14">
       <div className="container">
         <div className="grid grid-cols-2 md:grid-cols-4">
           {person.metrics.map((metric, i) => (

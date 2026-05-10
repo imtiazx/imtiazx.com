@@ -44,7 +44,7 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${dmSerifDisplay.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="antialiased">
+      <body className="antialiased mesh-texture">
         <ThemeProvider>
           <AudioProvider>
             <CustomCursor />

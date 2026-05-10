@@ -30,7 +30,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
     <motion.div
       onHoverStart={() => { setHovered(true); playSound("hover"); }}
       onHoverEnd={() => setHovered(false)}
-      animate={{ y: hovered && !prefersReducedMotion ? -3 : 0 }}
+      whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       style={{
         backgroundColor: "var(--color-surface)",
@@ -38,58 +38,57 @@ export function ProjectCard({ project }: ProjectCardProps) {
         boxShadow: hovered ? "0 8px 24px var(--color-brand-light)" : "none",
         borderRadius: 12,
       }}
-      className="flex flex-col h-full border overflow-hidden transition-[border-color,box-shadow] duration-200"
+      className="flex flex-col h-full p-6 border transition-[border-color,box-shadow] duration-200"
     >
-      <div className="flex flex-col flex-1 p-5 gap-0">
-        {/* Title + badge */}
-        <div className="flex items-start justify-between gap-3 shrink-0">
-          <h3
-            style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
-            className="text-xl leading-tight"
-          >
-            {project.title}
-          </h3>
-          <StatusBadge status={project.status} />
-        </div>
+      {/* Status badge — top-left like PostCard category chip */}
+      <div className="mb-3 shrink-0">
+        <StatusBadge status={project.status} />
+      </div>
 
-        {/* Subtitle */}
+      {/* Title */}
+      <h3
+        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        className="text-xl leading-snug mb-2 shrink-0"
+      >
+        {project.title}
+      </h3>
+
+      {/* Subtitle */}
+      <p
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+        className="text-[13px] leading-snug line-clamp-1 mb-3 shrink-0"
+      >
+        {project.subtitle}
+      </p>
+
+      {/* Description: fixed 4-line area matching PostCard's fixed-height approach */}
+      <div className="h-[88px] overflow-hidden shrink-0">
         <p
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
-          className="text-[13px] leading-snug line-clamp-1 mt-1 shrink-0"
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-secondary)" }}
+          className="text-sm leading-relaxed line-clamp-4"
         >
-          {project.subtitle}
+          {project.description}
         </p>
+      </div>
 
-        {/* Divider */}
-        <div
-          style={{ borderTop: "1px solid var(--color-border)" }}
-          className="my-3 shrink-0"
-        />
-
-        {/* Description: fixed 4-line area */}
-        <div className="h-[88px] overflow-hidden shrink-0">
-          <p
-            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-secondary)" }}
-            className="text-sm leading-relaxed line-clamp-4"
-          >
-            {project.description}
-          </p>
+      {/* Tags: max 2 rows */}
+      <div className="mt-3 max-h-[3.25rem] overflow-hidden shrink-0">
+        <div className="flex flex-wrap gap-1.5">
+          {project.tags.map((tag) => (
+            <ChipTag key={tag} label={tag} />
+          ))}
         </div>
+      </div>
 
-        {/* Tags: max 2 rows */}
-        <div className="mt-3 max-h-[3.25rem] overflow-hidden shrink-0">
-          <div className="flex flex-wrap gap-1.5">
-            {project.tags.map((tag) => (
-              <ChipTag key={tag} label={tag} />
-            ))}
-          </div>
-        </div>
+      {/* Spacer */}
+      <div className="flex-1 min-h-[0.75rem]" />
 
-        {/* Spacer */}
-        <div className="flex-1 min-h-[0.75rem]" />
-
-        {/* Links: left-aligned, phantom spans for absent links */}
-        <div className="flex flex-wrap gap-2 shrink-0">
+      {/* Links row — pinned to bottom, same border-top as PostCard read link */}
+      <div
+        className="pt-4 mt-4 shrink-0"
+        style={{ borderTop: "1px solid var(--color-border)" }}
+      >
+        <div className="flex flex-wrap gap-2">
           {LINK_SPEC.map(({ key, label, icon }) => {
             const href = project.links[key];
             return href ? (

@@ -2,54 +2,49 @@
 
 import { useEffect, useState } from "react";
 
-/* ─── Zone 0: floating math symbols ─────────────────────────────────────── */
+/* ─── Zone 0: interactive math symbols (side margins only) ───────────────── */
 
 const MATH_SYMBOLS = [
-  { t: "∑",       x: 5,  y: 10, size: 14, op: 0.06, dur: 72  },
-  { t: "∫",       x: 82, y: 8,  size: 16, op: 0.05, dur: 95  },
-  { t: "∇²",      x: 18, y: 75, size: 13, op: 0.07, dur: 68  },
-  { t: "σ",       x: 90, y: 35, size: 18, op: 0.04, dur: 85  },
-  { t: "μ",       x: 40, y: 15, size: 12, op: 0.08, dur: 110 },
-  { t: "∂",       x: 65, y: 80, size: 15, op: 0.06, dur: 78  },
-  { t: "λ",       x: 8,  y: 55, size: 17, op: 0.05, dur: 100 },
-  { t: "∞",       x: 75, y: 25, size: 16, op: 0.07, dur: 62  },
-  { t: "∈",       x: 30, y: 88, size: 11, op: 0.09, dur: 88  },
-  { t: "⊕",       x: 55, y: 45, size: 13, op: 0.05, dur: 115 },
-  { t: "argmax",  x: 12, y: 30, size: 12, op: 0.06, dur: 80  },
-  { t: "softmax", x: 85, y: 65, size: 11, op: 0.04, dur: 92  },
-  { t: "P(x|θ)",  x: 48, y: 5,  size: 13, op: 0.07, dur: 105 },
-  { t: "E[X]",    x: 22, y: 50, size: 14, op: 0.06, dur: 75  },
-  { t: "KL(p‖q)", x: 70, y: 12, size: 11, op: 0.05, dur: 118 },
-  { t: "∂L/∂w",  x: 92, y: 55, size: 12, op: 0.08, dur: 85  },
-  { t: "O(n²)",   x: 35, y: 70, size: 13, op: 0.06, dur: 98  },
-  { t: "f(x)→ŷ", x: 58, y: 90, size: 12, op: 0.07, dur: 72  },
-  { t: "Σwᵢxᵢ",  x: 15, y: 92, size: 11, op: 0.05, dur: 108 },
-  { t: "ReLU(x)", x: 78, y: 48, size: 13, op: 0.04, dur: 88  },
+  // Left margin  (x: 1–10%)
+  { t: "∑",       x: 3,  y: 12, size: 13, dur: 88  },
+  { t: "λ",       x: 7,  y: 28, size: 15, dur: 100 },
+  { t: "argmax",  x: 2,  y: 45, size: 11, dur: 80  },
+  { t: "∫",       x: 9,  y: 62, size: 14, dur: 95  },
+  { t: "E[X]",    x: 4,  y: 78, size: 12, dur: 105 },
+  { t: "∂L/∂w",  x: 7,  y: 18, size: 11, dur: 85  },
+  { t: "∈",       x: 3,  y: 55, size: 13, dur: 88  },
+  { t: "Σwᵢxᵢ",  x: 8,  y: 85, size: 10, dur: 108 },
+  { t: "∇²",      x: 5,  y: 38, size: 12, dur: 68  },
+  { t: "O(n²)",   x: 2,  y: 70, size: 12, dur: 98  },
+  // Right margin (x: 88–98%)
+  { t: "σ",       x: 95, y: 15, size: 14, dur: 85  },
+  { t: "∞",       x: 90, y: 32, size: 15, dur: 62  },
+  { t: "⊕",       x: 97, y: 50, size: 11, dur: 115 },
+  { t: "softmax", x: 89, y: 68, size: 10, dur: 92  },
+  { t: "P(x|θ)",  x: 93, y: 82, size: 12, dur: 105 },
+  { t: "μ",       x: 91, y: 8,  size: 13, dur: 110 },
+  { t: "∂",       x: 96, y: 42, size: 14, dur: 78  },
+  { t: "KL(p‖q)", x: 89, y: 60, size: 10, dur: 118 },
+  { t: "f(x)→ŷ", x: 94, y: 25, size: 11, dur: 72  },
+  { t: "ReLU(x)", x: 92, y: 75, size: 12, dur: 88  },
 ];
 
-/* ─── Zone 1: neural network ────────────────────────────────────────────── */
+interface SymPos { x: number; y: number; popped: boolean; }
 
-// 24 nodes in 4 layers of 6, with slight offsets
+/* ─── Zone 1: neural network ─────────────────────────────────────────────── */
+
 const NN_NODES = [
-  // Layer 0 (x ≈ 12%)
   [12, 14], [13, 27], [11, 40], [14, 53], [12, 66], [11, 79],
-  // Layer 1 (x ≈ 37%)
   [36, 11], [38, 24], [35, 37], [37, 50], [39, 63], [36, 76],
-  // Layer 2 (x ≈ 62%)
   [62, 17], [60, 30], [63, 43], [61, 56], [64, 69], [62, 82],
-  // Layer 3 (x ≈ 87%)
   [87, 14], [85, 27], [88, 40], [86, 53], [87, 66], [89, 79],
 ];
 
-// Connections: each node -> 2-3 nodes in next layer
 const NN_LINES: [number, number][] = [
-  // Layer 0 -> Layer 1
   [0,6],[0,7],[1,6],[1,7],[1,8],[2,7],[2,8],[2,9],
   [3,8],[3,9],[3,10],[4,9],[4,10],[4,11],[5,10],[5,11],
-  // Layer 1 -> Layer 2
   [6,12],[6,13],[7,12],[7,13],[7,14],[8,13],[8,14],[8,15],
   [9,14],[9,15],[9,16],[10,15],[10,16],[10,17],[11,16],[11,17],
-  // Layer 2 -> Layer 3
   [12,18],[12,19],[13,18],[13,19],[13,20],[14,19],[14,20],[14,21],
   [15,20],[15,21],[15,22],[16,21],[16,22],[16,23],[17,22],[17,23],
 ];
@@ -57,10 +52,10 @@ const NN_LINES: [number, number][] = [
 /* ─── Zone 3: sine waves ─────────────────────────────────────────────────── */
 
 const SINE_WAVES = [
-  { amp: 30, freq: 0.5, phase: 0,                 cy: 220, dur: 55, op: 0.07 },
-  { amp: 20, freq: 0.8, phase: Math.PI / 2,       cy: 430, dur: 40, op: 0.06 },
-  { amp: 50, freq: 0.3, phase: Math.PI,           cy: 630, dur: 70, op: 0.09 },
-  { amp: 35, freq: 0.6, phase: Math.PI * 1.5,     cy: 850, dur: 60, op: 0.07 },
+  { amp: 30, freq: 0.5, phase: 0,             cy: 220, dur: 55, op: 0.05 },
+  { amp: 20, freq: 0.8, phase: Math.PI / 2,   cy: 430, dur: 40, op: 0.04 },
+  { amp: 50, freq: 0.3, phase: Math.PI,       cy: 630, dur: 70, op: 0.06 },
+  { amp: 35, freq: 0.6, phase: Math.PI * 1.5, cy: 850, dur: 60, op: 0.05 },
 ];
 
 function buildSinePath(amp: number, freq: number, phase: number, cy: number): string {
@@ -72,21 +67,27 @@ function buildSinePath(amp: number, freq: number, phase: number, cy: number): st
   return d;
 }
 
-const SINE_PATHS = SINE_WAVES.map((w) => ({ ...w, d: buildSinePath(w.amp, w.freq, w.phase, w.cy) }));
+const SINE_PATHS = SINE_WAVES.map((w) => ({
+  ...w,
+  d: buildSinePath(w.amp, w.freq, w.phase, w.cy),
+}));
 
-/* ─── Observer config ───────────────────────────────────────────────────── */
+/* ─── Observer config ────────────────────────────────────────────────────── */
 
 const ZONE_MAP: Record<string, number> = {
   hero: 0, metrics: 1, projects: 2, identity: 2, writing: 3, footer: 4,
 };
 const SECTION_IDS = Object.keys(ZONE_MAP);
 
-/* ─── Component ─────────────────────────────────────────────────────────── */
+/* ─── Component ──────────────────────────────────────────────────────────── */
 
 export function ScrollBackground() {
-  const [zone,         setZone]         = useState(0);
-  const [active,       setActive]       = useState(false);
+  const [zone,          setZone]          = useState(0);
+  const [active,        setActive]        = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [symPos,        setSymPos]        = useState<SymPos[]>(() =>
+    MATH_SYMBOLS.map((s) => ({ x: s.x, y: s.y, popped: false }))
+  );
 
   useEffect(() => {
     const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -115,12 +116,29 @@ export function ScrollBackground() {
     return () => observer.disconnect();
   }, []);
 
+  const handleSymbolClick = (index: number) => {
+    if (reducedMotion) return;
+    const isLeft = symPos[index].x < 50;
+
+    setSymPos((prev) =>
+      prev.map((s, i) => (i === index ? { ...s, popped: true } : s))
+    );
+
+    setTimeout(() => {
+      const newX = isLeft ? 1 + Math.random() * 9 : 88 + Math.random() * 10;
+      const newY = 60 + Math.random() * 30;
+      setSymPos((prev) =>
+        prev.map((s, i) => (i === index ? { x: newX, y: newY, popped: false } : s))
+      );
+    }, 720);
+  };
+
   if (!active) return null;
 
   const layerStyle = (zoneIndex: number): React.CSSProperties => ({
     position: "fixed",
     inset: 0,
-    opacity: reducedMotion ? 0.3 : zone === zoneIndex ? 1 : 0,
+    opacity: reducedMotion ? 0.4 : zone === zoneIndex ? 1 : 0,
     transition: reducedMotion ? "none" : "opacity 800ms ease-in-out",
     pointerEvents: "none",
     zIndex: -1,
@@ -129,33 +147,48 @@ export function ScrollBackground() {
 
   return (
     <>
-      {/* Zone 0: floating math symbols */}
+      {/* Zone 0: interactive math symbols — side margins only */}
       <div style={layerStyle(0)}>
-        {MATH_SYMBOLS.map((sym, i) => (
-          <span
-            key={i}
-            aria-hidden
-            style={{
-              position: "absolute",
-              left: `${sym.x}%`,
-              top:  `${sym.y}%`,
-              fontFamily: "var(--font-mono)",
-              fontSize: `${sym.size}px`,
-              color: "var(--color-brand)",
-              opacity: sym.op,
-              animation: `symbolFloat ${sym.dur}s ease-in-out infinite`,
-              animationDelay: `${(i * 3.7) % 12}s`,
-              willChange: "transform",
-              userSelect: "none",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {sym.t}
-          </span>
-        ))}
+        {MATH_SYMBOLS.map((sym, i) => {
+          const pos   = symPos[i];
+          const color = i % 5 === 0
+            ? "rgba(234, 88, 12, 0.09)"
+            : "rgba(180, 100, 40, 0.06)";
+
+          return (
+            <span
+              key={i}
+              onClick={() => handleSymbolClick(i)}
+              className={`sb-symbol${pos.popped ? " symbol-pop" : ""}`}
+              aria-hidden
+              style={{
+                position: "absolute",
+                left: `${pos.x}%`,
+                top:  `${pos.y}%`,
+                fontFamily: "var(--font-mono)",
+                fontSize:   `${sym.size}px`,
+                color,
+                animation: pos.popped
+                  ? "none"
+                  : `symbolFloat ${sym.dur}s ease-in-out infinite`,
+                animationDelay: pos.popped
+                  ? undefined
+                  : `${(i * 3.7) % 12}s`,
+                willChange:    "transform",
+                userSelect:    "none",
+                whiteSpace:    "nowrap",
+                pointerEvents: "auto",
+                cursor:        "default",
+                "--symbol-opacity": 1,
+              } as React.CSSProperties}
+            >
+              {sym.t}
+            </span>
+          );
+        })}
       </div>
 
-      {/* Zone 1: neural network */}
+      {/* Zone 1: neural network — full width */}
       <div style={layerStyle(1)}>
         <svg
           width="100%"
@@ -170,10 +203,9 @@ export function ScrollBackground() {
               y1={`${NN_NODES[i][1]}%`}
               x2={`${NN_NODES[j][0]}%`}
               y2={`${NN_NODES[j][1]}%`}
-              stroke="var(--color-brand)"
+              stroke="rgba(234, 88, 12, 0.04)"
               strokeWidth="1"
               style={{
-                opacity: 0.06,
                 animation: `linePulse ${10 + (k % 6)}s ease-in-out infinite`,
                 animationDelay: `${(k * 0.7) % 5}s`,
               }}
@@ -185,10 +217,9 @@ export function ScrollBackground() {
               cx={`${x}%`}
               cy={`${y}%`}
               r="4"
-              fill="var(--color-brand)"
+              fill="rgba(234, 88, 12, 0.10)"
               style={{
-                opacity: 0.15,
-                transformBox: "fill-box",
+                transformBox:    "fill-box",
                 transformOrigin: "center",
                 animation: `nodePulse ${3 + (i % 4)}s ease-in-out infinite`,
                 animationDelay: `${(i * 0.4) % 3}s`,
@@ -198,7 +229,7 @@ export function ScrollBackground() {
         </svg>
       </div>
 
-      {/* Zone 2: precise dot grid */}
+      {/* Zone 2: precise dot grid — full width */}
       <div style={layerStyle(2)}>
         <svg
           width="100%"
@@ -212,14 +243,16 @@ export function ScrollBackground() {
               x="0" y="0" width="36" height="36"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="18" cy="18" r="0.75" fill="var(--color-brand)" fillOpacity="0.07" />
+              <circle cx="18" cy="18" r="0.75"
+                fill="rgba(234, 88, 12, 0.05)" />
             </pattern>
             <pattern
               id="sb-large-dots"
               x="0" y="0" width="216" height="216"
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="18" cy="18" r="1.25" fill="var(--color-brand)" fillOpacity="0.12" />
+              <circle cx="18" cy="18" r="1.25"
+                fill="rgba(234, 88, 12, 0.09)" />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#sb-small-dots)" />
@@ -227,7 +260,7 @@ export function ScrollBackground() {
         </svg>
       </div>
 
-      {/* Zone 3: sine waves */}
+      {/* Zone 3: sine waves — full width */}
       <div style={layerStyle(3)}>
         <svg
           viewBox="0 0 1920 1080"
@@ -240,7 +273,7 @@ export function ScrollBackground() {
               key={i}
               d={wave.d}
               fill="none"
-              stroke="var(--color-brand)"
+              stroke="rgba(234, 88, 12, 1)"
               strokeWidth="1"
               style={{
                 opacity: wave.op,
@@ -258,7 +291,7 @@ export function ScrollBackground() {
         style={{
           ...layerStyle(4),
           background:
-            "radial-gradient(ellipse at center, var(--color-brand-light) 0%, transparent 70%)",
+            "radial-gradient(ellipse at center, rgba(234,88,12,0.04) 0%, transparent 70%)",
         }}
       />
     </>
