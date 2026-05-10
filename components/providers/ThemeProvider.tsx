@@ -41,12 +41,12 @@ function applyClass(theme: Theme): void {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>("system");
+  const [theme, setThemeState] = useState<Theme>("light");
 
   useEffect(() => {
     const stored = localStorage.getItem(STORAGE_KEY) as Theme | null;
     const initial: Theme =
-      stored && CYCLE_ORDER.includes(stored) ? stored : "system";
+      stored && CYCLE_ORDER.includes(stored) ? stored : "light";
     setThemeState(initial);
     applyClass(initial);
   }, []);
