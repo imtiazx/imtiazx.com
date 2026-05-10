@@ -14,22 +14,19 @@ export function Hero() {
   const initial = prefersReducedMotion ? "visible" : "hidden";
 
   return (
-    <section className="relative flex items-center min-h-screen overflow-hidden px-6 md:px-12 lg:px-20">
+    <section className="relative flex items-center min-h-screen overflow-hidden">
       <div aria-hidden className="absolute inset-0">
         <div className="mesh-blob-purple" />
         <div className="mesh-blob-teal" />
       </div>
 
-      <div className="relative z-10 max-w-4xl w-full py-24">
+      <div className="container relative z-10 py-24">
         <motion.h1
           variants={fadeUp}
           initial={initial}
           animate="visible"
           transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay: 0 }}
-          style={{
-            fontFamily: "var(--font-serif)",
-            color: "var(--color-text-primary)",
-          }}
+          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
           className="text-4xl md:text-5xl lg:text-6xl leading-tight mb-6"
         >
           {person.tagline}
@@ -40,10 +37,7 @@ export function Hero() {
           initial={initial}
           animate="visible"
           transition={{ duration: 0.65, ease: [0.25, 0.1, 0.25, 1], delay: 0.08 }}
-          style={{
-            fontFamily: "var(--font-sans)",
-            color: "var(--color-text-secondary)",
-          }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-secondary)" }}
           className="text-lg leading-relaxed mb-10 max-w-2xl"
         >
           {person.bio}
@@ -58,10 +52,7 @@ export function Hero() {
         >
           <Link
             href="/work"
-            style={{
-              backgroundColor: "var(--color-purple)",
-              fontFamily: "var(--font-sans)",
-            }}
+            style={{ backgroundColor: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
             className="inline-flex items-center px-6 py-3 rounded-lg text-white text-sm font-medium transition-opacity duration-150 hover:opacity-90"
           >
             View my work
@@ -70,8 +61,8 @@ export function Hero() {
           <Link
             href="/writing"
             style={{
-              borderColor: "var(--color-purple)",
-              color: "var(--color-purple)",
+              borderColor: "var(--color-brand)",
+              color: "var(--color-brand)",
               fontFamily: "var(--font-sans)",
             }}
             className="inline-flex items-center px-6 py-3 rounded-lg border text-sm font-medium bg-transparent transition-colors duration-150 hover:bg-[var(--color-surface)]"

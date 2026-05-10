@@ -20,8 +20,8 @@ export function ProjectsSection() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
-    <section className="py-20 lg:py-28 px-6 md:px-12 lg:px-20">
-      <div className="max-w-7xl mx-auto">
+    <section className="py-20 lg:py-28">
+      <div className="container">
         <h2
           style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
           className="text-3xl md:text-4xl mb-12"

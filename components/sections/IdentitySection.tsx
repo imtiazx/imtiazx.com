@@ -14,7 +14,7 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
-function IdentityCardItem({ card }: { card: IdentityCard }) {
+function IdentityItem({ card }: { card: IdentityCard }) {
   const [hovered, setHovered] = useState(false);
 
   return (
@@ -22,21 +22,29 @@ function IdentityCardItem({ card }: { card: IdentityCard }) {
       variants={itemVariants}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
-      style={{
-        backgroundColor: hovered ? "var(--color-brand-light)" : "var(--color-bg)",
-        borderColor: hovered ? "var(--color-brand)" : "var(--color-border)",
-      }}
-      className="flex flex-col h-full gap-2 p-6 rounded-xl border transition-[border-color,background-color] duration-200"
+      className="flex flex-col"
     >
       <h3
         style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
-        className="text-base font-semibold shrink-0"
+        className="text-base font-semibold leading-snug"
       >
         {card.title}
       </h3>
+
+      {/* Animated underline */}
+      <div
+        style={{
+          height: "1px",
+          width: hovered ? "100%" : "32px",
+          backgroundColor: hovered ? "var(--color-brand)" : "var(--color-border)",
+          transition: "width 300ms ease, background-color 300ms ease",
+          marginTop: "8px",
+        }}
+      />
+
       <p
         style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
-        className="text-sm leading-relaxed flex-1"
+        className="text-sm leading-relaxed mt-3"
       >
         {card.description}
       </p>
@@ -50,9 +58,9 @@ export function IdentitySection() {
   return (
     <section
       style={{ backgroundColor: "var(--color-surface)" }}
-      className="py-20 lg:py-28 px-6 md:px-12 lg:px-20"
+      className="py-20 lg:py-28"
     >
-      <div className="max-w-7xl mx-auto">
+      <div className="container">
         <h2
           style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
           className="text-3xl md:text-4xl mb-12"
@@ -65,10 +73,10 @@ export function IdentitySection() {
           initial={prefersReducedMotion ? "visible" : "hidden"}
           whileInView="visible"
           viewport={{ once: true, amount: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
         >
           {person.identityCards.map((card) => (
-            <IdentityCardItem key={card.title} card={card} />
+            <IdentityItem key={card.title} card={card} />
           ))}
         </motion.div>
       </div>

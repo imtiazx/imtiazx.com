@@ -3,6 +3,10 @@
 @tailwind utilities;
 
 :root {
+  /* Layout */
+  --content-max-width: 1400px;
+  --content-padding: clamp(1.5rem, 5vw, 6rem);
+
   /* Background and surface */
   --color-bg: #FAFAF9;
   --color-surface: #FFFFFF;
@@ -87,6 +91,15 @@ body {
   transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
+.container {
+  width: 100%;
+  max-width: var(--content-max-width);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: var(--content-padding);
+  padding-right: var(--content-padding);
+}
+
 @layer utilities {
   .text-balance {
     text-wrap: balance;
@@ -136,23 +149,25 @@ body {
 
 /* Scroll background animations */
 @keyframes symbolFloat {
-  0%, 100% { transform: translateY(0) translateX(0); opacity: 0.6; }
-  33% { transform: translateY(-12px) translateX(6px); opacity: 1; }
-  66% { transform: translateY(8px) translateX(-4px); opacity: 0.7; }
+  0%   { transform: translateY(0) translateX(0) rotate(0deg);   opacity: 0.6; }
+  25%  { transform: translateY(-10px) translateX(5px) rotate(10deg);  opacity: 1;   }
+  50%  { transform: translateY(-4px) translateX(-3px) rotate(-6deg);  opacity: 0.7; }
+  75%  { transform: translateY(7px) translateX(3px) rotate(14deg);  opacity: 0.9; }
+  100% { transform: translateY(0) translateX(0) rotate(0deg);   opacity: 0.6; }
 }
 
-@keyframes neuralPulse {
-  0%, 100% { opacity: 0.4; }
-  50% { opacity: 1; }
+@keyframes nodePulse {
+  0%, 100% { transform: scale(1);   opacity: 0.15; }
+  50%       { transform: scale(1.4); opacity: 0.30; }
 }
 
 @keyframes linePulse {
-  0%, 100% { opacity: 0.2; }
-  50% { opacity: 0.6; }
+  0%, 100% { opacity: 0.04; }
+  50%       { opacity: 0.10; }
 }
 
 @keyframes sineDrift {
-  0% { transform: translateX(0); }
-  50% { transform: translateX(-40px); }
-  100% { transform: translateX(0); }
+  0%   { transform: translateX(0);    }
+  50%  { transform: translateX(-60px); }
+  100% { transform: translateX(0);    }
 }

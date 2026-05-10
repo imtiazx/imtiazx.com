@@ -4,20 +4,22 @@ interface StatusBadgeProps {
   status: ProjectStatus;
 }
 
-const badgeColor: Record<ProjectStatus, string> = {
-  Production: "var(--color-teal)",
-  Development: "var(--color-brand)",
-  Ideation: "var(--color-amber)",
+type BadgeStyle = { backgroundColor: string; color: string };
+
+const badgeStyle: Record<ProjectStatus, BadgeStyle> = {
+  Production:  { backgroundColor: "var(--color-teal)",        color: "#ffffff" },
+  Development: { backgroundColor: "var(--color-brand)",       color: "#ffffff" },
+  Ideation:    { backgroundColor: "var(--color-amber-light)", color: "var(--color-amber)" },
 };
 
 export function StatusBadge({ status }: StatusBadgeProps) {
   return (
     <span
       style={{
-        backgroundColor: badgeColor[status],
-        fontFamily: "var(--font-mono)",
+        ...badgeStyle[status],
+        fontFamily: "var(--font-sans)",
       }}
-      className="inline-block shrink-0 px-2 py-0.5 rounded-full text-[10px] text-white uppercase tracking-wider font-medium"
+      className="inline-block shrink-0 px-2 py-0.5 rounded-full text-[10px] uppercase tracking-wider font-medium"
     >
       {status}
     </span>

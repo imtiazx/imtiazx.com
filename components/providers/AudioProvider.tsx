@@ -30,34 +30,32 @@ const AudioContext = createContext<AudioContextValue>({
 
 const noop = () => {};
 
-function generateClickSound(): void {
+function generateClickSound(ctx: AudioContext): void {
   try {
-    const ctx = new window.AudioContext();
-    const osc = ctx.createOscillator();
+    const osc  = ctx.createOscillator();
     const gain = ctx.createGain();
 
     osc.connect(gain);
     gain.connect(ctx.destination);
 
     osc.type = "sine";
-    osc.frequency.setValueAtTime(800, ctx.currentTime);
+    osc.frequency.setValueAtTime(880, ctx.currentTime);
 
-    gain.gain.setValueAtTime(0.3, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.15, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.06);
 
     osc.start(ctx.currentTime);
-    osc.stop(ctx.currentTime + 0.08);
-
-    osc.onended = () => ctx.close();
+    osc.stop(ctx.currentTime + 0.06);
   } catch {
-    // AudioContext unavailable
+    // node creation failed
   }
 }
 
 export function AudioProvider({ children }: { children: ReactNode }) {
   const [audioState, setAudioState] = useState<AudioState>("interactive");
-  const ambientRef = useRef<Howl | null>(null);
-  const soundsRef = useRef<Partial<Record<SoundName, Howl>>>({});
+  const ambientRef  = useRef<Howl | null>(null);
+  const soundsRef   = useRef<Partial<Record<SoundName, Howl>>>({});
+  const audioCtxRef = useRef<AudioContext | null>(null);
 
   useEffect(() => {
     ambientRef.current = new Howl({
@@ -80,17 +78,18 @@ export function AudioProvider({ children }: { children: ReactNode }) {
     });
 
     const ambient = ambientRef.current;
-    const sounds = soundsRef.current;
+    const sounds  = soundsRef.current;
     return () => {
       ambient?.unload();
       Object.values(sounds).forEach((s) => s?.unload());
+      audioCtxRef.current?.close().catch(() => {});
+      audioCtxRef.current = null;
     };
   }, []);
 
   useEffect(() => {
     const ambient = ambientRef.current;
     if (!ambient) return;
-
     if (audioState === "ambient") {
       if (!ambient.playing()) ambient.play();
     } else {
@@ -108,8 +107,21 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const playSound = useCallback(
     (sound: SoundName) => {
       if (audioState === "mute") return;
+
       if (sound === "click") {
-        generateClickSound();
+        try {
+          if (!audioCtxRef.current) {
+            audioCtxRef.current = new window.AudioContext();
+          }
+          const ctx = audioCtxRef.current;
+          if (ctx.state === "suspended") {
+            ctx.resume().then(() => generateClickSound(ctx));
+          } else {
+            generateClickSound(ctx);
+          }
+        } catch {
+          // AudioContext unavailable
+        }
       } else {
         soundsRef.current[sound]?.play();
       }

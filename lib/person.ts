@@ -31,7 +31,7 @@ export const person: Person = {
   tagline: "I engineer AI systems from prototype to production.",
   bio: "Md Imtiaz Ahmed Mollah is an AI engineer with over four years of experience shipping production AI systems across enterprise and startup environments. At Accenture, he led responsible AI initiatives spanning bias auditing, safety evaluations, and governance frameworks for large-scale GenAI deployments across 25+ enterprise studies. He now focuses on open-source AI tooling, building frameworks that make production-grade RAG and agentic systems accessible to engineering teams worldwide.",
   metrics: [
-    { value: "4+", label: "Years shipping production AI" },
+    { value: "~5", label: "Years shipping production AI" },
     { value: "25+", label: "Enterprise GenAI studies" },
     { value: "75%", label: "Effort reduction delivered" },
     { value: "3rd", label: "LangFlow global hackathon" },

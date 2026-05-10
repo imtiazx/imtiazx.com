@@ -10,20 +10,20 @@ import { person } from "@/lib/person";
 const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
 
 const NAV_LINKS = [
-  { label: "Work", href: "/work" },
+  { label: "Work",    href: "/work"    },
   { label: "Writing", href: "/writing" },
-  { label: "Stack", href: "/stack" },
-  { label: "About", href: "/about" },
+  { label: "Stack",   href: "/stack"   },
+  { label: "About",   href: "/about"   },
 ];
 
 function ThemeIcon({ theme }: { theme: Theme }) {
-  if (theme === "dark") return <Moon size={16} />;
+  if (theme === "dark")   return <Moon size={16} />;
   if (theme === "system") return <Monitor size={16} />;
   return <Sun size={16} />;
 }
 
 function AudioIcon({ state }: { state: AudioState }) {
-  if (state === "mute") return <VolumeX size={16} />;
+  if (state === "mute")    return <VolumeX size={16} />;
   if (state === "ambient") return <Music size={16} />;
   return <Volume2 size={16} />;
 }
@@ -52,14 +52,14 @@ export function Nav() {
         borderBottomColor: "var(--color-border)",
       }}
     >
-      <div className="mx-auto flex h-14 max-w-5xl items-center justify-between px-6">
+      <div className="container flex h-14 items-center justify-between">
         <Link
           href="/"
           className="text-sm font-medium tracking-tight"
-          style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-mono)" }}
         >
-          {person.handle}
-          <span style={{ color: "var(--color-brand)" }}>.</span>
+          <span style={{ color: "var(--color-text-primary)" }}>{person.handle.slice(0, -1)}</span>
+          <span style={{ color: "var(--color-brand)" }}>{person.handle.slice(-1)}</span>
         </Link>
 
         <div className="flex items-center gap-1">
@@ -74,6 +74,7 @@ export function Nav() {
                       color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
                       textDecoration: isActive ? "underline" : "none",
                       textDecorationColor: "var(--color-brand)",
+                      textDecorationThickness: "2px",
                       textUnderlineOffset: "3px",
                     }}
                     className="rounded-md px-3 py-1.5 text-sm transition-colors"
