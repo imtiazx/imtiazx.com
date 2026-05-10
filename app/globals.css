@@ -3,21 +3,94 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Background and surface */
+  --color-background: #FFFFFF;
+  --color-surface: #F8F8FA;
+  --color-border: #E5E5EB;
+
+  /* Text */
+  --color-text-primary: #0F0F15;
+  --color-text-secondary: #4B4B5E;
+  --color-text-muted: #9090A0;
+
+  /* Brand colors */
+  --color-purple: #7C3AED;
+  --color-teal: #0D9488;
+  --color-coral: #E11D48;
+  --color-amber: #D97706;
+  --color-blue: #2563EB;
+  --color-green: #16A34A;
+
+  /* Light variants (10% opacity card backgrounds) */
+  --color-purple-light: rgba(124, 58, 237, 0.1);
+  --color-teal-light: rgba(13, 148, 136, 0.1);
+  --color-coral-light: rgba(225, 29, 72, 0.1);
+  --color-amber-light: rgba(217, 119, 6, 0.1);
+  --color-blue-light: rgba(37, 99, 235, 0.1);
+  --color-green-light: rgba(22, 163, 74, 0.1);
+
+  /* Typography */
+  --font-sans: 'DM Sans', system-ui, sans-serif;
+  --font-serif: 'DM Serif Display', Georgia, serif;
+  --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
+
+  /* Spacing (4px base unit) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Transitions */
+  --transition-base: 150ms ease;
+  --transition-slow: 300ms ease;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+.dark {
+  --color-background: #0A0A0F;
+  --color-surface: #13131A;
+  --color-border: #2A2A3A;
+  --color-text-primary: #F0F0F5;
+  --color-text-secondary: #A0A0B5;
+  --color-text-muted: #606075;
+
+  /* Brand colors are intentionally the same in dark mode */
+  --color-purple: #7C3AED;
+  --color-teal: #0D9488;
+  --color-coral: #E11D48;
+  --color-amber: #D97706;
+  --color-blue: #2563EB;
+  --color-green: #16A34A;
+
+  /* Light variants slightly brighter in dark mode for visibility */
+  --color-purple-light: rgba(124, 58, 237, 0.15);
+  --color-teal-light: rgba(13, 148, 136, 0.15);
+  --color-coral-light: rgba(225, 29, 72, 0.15);
+  --color-amber-light: rgba(217, 119, 6, 0.15);
+  --color-blue-light: rgba(37, 99, 235, 0.15);
+  --color-green-light: rgba(22, 163, 74, 0.15);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
 }
 
 body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--color-background);
+  color: var(--color-text-primary);
+  font-family: var(--font-sans);
+  transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
 @layer utilities {
