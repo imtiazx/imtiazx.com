@@ -12,6 +12,7 @@ export interface Social {
   github: string;
   hashnode: string;
   linkedin: string;
+  email: string;
 }
 
 export interface Person {
@@ -65,5 +66,6 @@ export const person: Person = {
     github: "https://github.com/imtiazx",
     hashnode: "https://blog.imtiaz.dev",
     linkedin: "",
+    email: "imtiaz0x1@gmail.com",
   },
 };

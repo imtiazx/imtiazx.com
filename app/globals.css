@@ -98,3 +98,43 @@ body {
     text-wrap: balance;
   }
 }
+
+@keyframes blobDrift1 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(40px, -28px) scale(1.06); }
+  66% { transform: translate(-22px, 18px) scale(0.95); }
+}
+
+@keyframes blobDrift2 {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  33% { transform: translate(-32px, 24px) scale(0.94); }
+  66% { transform: translate(26px, -36px) scale(1.07); }
+}
+
+.mesh-blob-purple {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-purple) 0%, transparent 70%);
+  opacity: 0.05;
+  filter: blur(60px);
+  top: -120px;
+  left: -80px;
+  animation: blobDrift1 22s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.mesh-blob-teal {
+  position: absolute;
+  width: 500px;
+  height: 500px;
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--color-teal) 0%, transparent 70%);
+  opacity: 0.05;
+  filter: blur(60px);
+  bottom: -60px;
+  right: -40px;
+  animation: blobDrift2 28s ease-in-out infinite;
+  pointer-events: none;
+}
