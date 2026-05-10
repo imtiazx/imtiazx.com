@@ -5,6 +5,7 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AudioProvider } from "@/components/providers/AudioProvider";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
+import { CustomCursor } from "@/components/ui/CustomCursor";
 
 const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
@@ -46,6 +47,7 @@ export default function RootLayout({
       <body className="antialiased">
         <ThemeProvider>
           <AudioProvider>
+            <CustomCursor />
             <Nav />
             <main>{children}</main>
             <Footer />
