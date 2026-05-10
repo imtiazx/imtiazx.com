@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { DM_Serif_Display, DM_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
+import { AudioProvider } from "@/components/providers/AudioProvider";
+import { Nav } from "@/components/layout/Nav";
+import { Footer } from "@/components/layout/Footer";
 
 const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
@@ -36,9 +40,18 @@ export default function RootLayout({
   return (
     <html
       lang="en"
+      suppressHydrationWarning
       className={`${dmSerifDisplay.variable} ${dmSans.variable} ${jetbrainsMono.variable}`}
     >
-      <body className="antialiased">{children}</body>
+      <body className="antialiased">
+        <ThemeProvider>
+          <AudioProvider>
+            <Nav />
+            <main>{children}</main>
+            <Footer />
+          </AudioProvider>
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
