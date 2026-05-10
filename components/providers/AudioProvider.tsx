@@ -30,6 +30,30 @@ const AudioContext = createContext<AudioContextValue>({
 
 const noop = () => {};
 
+function generateClickSound(): void {
+  try {
+    const ctx = new window.AudioContext();
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    osc.type = "sine";
+    osc.frequency.setValueAtTime(800, ctx.currentTime);
+
+    gain.gain.setValueAtTime(0.3, ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+
+    osc.start(ctx.currentTime);
+    osc.stop(ctx.currentTime + 0.08);
+
+    osc.onended = () => ctx.close();
+  } catch {
+    // AudioContext unavailable
+  }
+}
+
 export function AudioProvider({ children }: { children: ReactNode }) {
   const [audioState, setAudioState] = useState<AudioState>("interactive");
   const ambientRef = useRef<Howl | null>(null);
@@ -45,7 +69,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       onplayerror: noop,
     });
 
-    const uiSounds: SoundName[] = ["click", "hover", "transition", "toggle"];
+    const uiSounds: SoundName[] = ["hover", "transition", "toggle"];
     uiSounds.forEach((name) => {
       soundsRef.current[name] = new Howl({
         src: [`/audio/${name}.mp3`],
@@ -84,7 +108,11 @@ export function AudioProvider({ children }: { children: ReactNode }) {
   const playSound = useCallback(
     (sound: SoundName) => {
       if (audioState === "mute") return;
-      soundsRef.current[sound]?.play();
+      if (sound === "click") {
+        generateClickSound();
+      } else {
+        soundsRef.current[sound]?.play();
+      }
     },
     [audioState]
   );

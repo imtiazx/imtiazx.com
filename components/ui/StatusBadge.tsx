@@ -6,7 +6,7 @@ interface StatusBadgeProps {
 
 const badgeColor: Record<ProjectStatus, string> = {
   Production: "var(--color-teal)",
-  Development: "var(--color-purple)",
+  Development: "var(--color-brand)",
   Ideation: "var(--color-amber)",
 };
 

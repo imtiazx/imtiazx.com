@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Sun, Moon, Monitor, Volume2, VolumeX, Music } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 import { useAudio, type AudioState } from "@/components/providers/AudioProvider";
@@ -30,6 +31,7 @@ function AudioIcon({ state }: { state: AudioState }) {
 export function Nav() {
   const { theme, setTheme } = useTheme();
   const { audioState, cycleAudio, playSound } = useAudio();
+  const pathname = usePathname();
 
   const handleThemeToggle = () => {
     playSound("toggle");
@@ -57,35 +59,37 @@ export function Nav() {
           style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-primary)" }}
         >
           {person.handle}
-          <span style={{ color: "var(--color-purple)" }}>.</span>
+          <span style={{ color: "var(--color-brand)" }}>.</span>
         </Link>
 
         <div className="flex items-center gap-1">
           <ul className="mr-4 hidden items-center gap-1 md:flex">
-            {NAV_LINKS.map(({ label, href }) => (
-              <li key={href}>
-                <Link
-                  href={href}
-                  className="rounded-md px-3 py-1.5 text-sm transition-colors"
-                  style={{
-                    color: "var(--color-text-secondary)",
-                    transitionDuration: "var(--transition-base)",
-                  }}
-                  onMouseEnter={() => playSound("hover")}
-                >
-                  {label}
-                </Link>
-              </li>
-            ))}
+            {NAV_LINKS.map(({ label, href }) => {
+              const isActive = pathname === href;
+              return (
+                <li key={href}>
+                  <Link
+                    href={href}
+                    style={{
+                      color: isActive ? "var(--color-text-primary)" : "var(--color-text-secondary)",
+                      textDecoration: isActive ? "underline" : "none",
+                      textDecorationColor: "var(--color-brand)",
+                      textUnderlineOffset: "3px",
+                    }}
+                    className="rounded-md px-3 py-1.5 text-sm transition-colors"
+                    onMouseEnter={() => playSound("hover")}
+                  >
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
           </ul>
 
           <button
             onClick={handleThemeToggle}
             className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-            style={{
-              color: "var(--color-text-muted)",
-              transitionDuration: "var(--transition-base)",
-            }}
+            style={{ color: "var(--color-brand)" }}
             aria-label={`Switch theme (current: ${theme})`}
           >
             <ThemeIcon theme={theme} />
@@ -94,10 +98,7 @@ export function Nav() {
           <button
             onClick={handleAudioToggle}
             className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-            style={{
-              color: "var(--color-text-muted)",
-              transitionDuration: "var(--transition-base)",
-            }}
+            style={{ color: "var(--color-brand)" }}
             aria-label={`Switch audio (current: ${audioState})`}
           >
             <AudioIcon state={audioState} />

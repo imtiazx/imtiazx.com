@@ -1,7 +1,8 @@
 "use client";
 
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { person } from "@/lib/person";
+import { person, type IdentityCard } from "@/lib/person";
 
 const containerVariants = {
   hidden: {},
@@ -13,6 +14,36 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+function IdentityCardItem({ card }: { card: IdentityCard }) {
+  const [hovered, setHovered] = useState(false);
+
+  return (
+    <motion.div
+      variants={itemVariants}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        backgroundColor: hovered ? "var(--color-brand-light)" : "var(--color-bg)",
+        borderColor: hovered ? "var(--color-brand)" : "var(--color-border)",
+      }}
+      className="flex flex-col h-full gap-2 p-6 rounded-xl border transition-[border-color,background-color] duration-200"
+    >
+      <h3
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+        className="text-base font-semibold shrink-0"
+      >
+        {card.title}
+      </h3>
+      <p
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+        className="text-sm leading-relaxed flex-1"
+      >
+        {card.description}
+      </p>
+    </motion.div>
+  );
+}
+
 export function IdentitySection() {
   const prefersReducedMotion = useReducedMotion();
 
@@ -23,10 +54,7 @@ export function IdentitySection() {
     >
       <div className="max-w-7xl mx-auto">
         <h2
-          style={{
-            fontFamily: "var(--font-serif)",
-            color: "var(--color-text-primary)",
-          }}
+          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
           className="text-3xl md:text-4xl mb-12"
         >
           What I bring
@@ -37,37 +65,10 @@ export function IdentitySection() {
           initial={prefersReducedMotion ? "visible" : "hidden"}
           whileInView="visible"
           viewport={{ once: true, amount: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 items-stretch"
         >
           {person.identityCards.map((card) => (
-            <motion.div
-              key={card.title}
-              variants={itemVariants}
-              style={{
-                backgroundColor: "var(--color-background)",
-                borderColor: "var(--color-border)",
-              }}
-              className="group flex flex-col gap-2 p-6 rounded-xl border border-l-2 border-l-transparent hover:border-l-[var(--color-purple)] transition-colors duration-200"
-            >
-              <h3
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  color: "var(--color-text-primary)",
-                }}
-                className="text-base font-semibold"
-              >
-                {card.title}
-              </h3>
-              <p
-                style={{
-                  fontFamily: "var(--font-sans)",
-                  color: "var(--color-text-muted)",
-                }}
-                className="text-sm leading-relaxed"
-              >
-                {card.description}
-              </p>
-            </motion.div>
+            <IdentityCardItem key={card.title} card={card} />
           ))}
         </motion.div>
       </div>

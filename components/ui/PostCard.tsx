@@ -3,57 +3,27 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import type { Post, PostCategory } from "@/lib/posts";
+import type { Post } from "@/lib/posts";
+import { person } from "@/lib/person";
 
 interface PostCardProps {
   post: Post;
 }
 
-type CategoryConfig = {
-  label: string;
-  color: string;
-  bg: string;
+const categoryLabel: Record<Post["category"], string> = {
+  technical: "Technical",
+  "responsible-ai": "Responsible AI",
+  strategy: "Strategy",
+  research: "Research",
 };
-
-const categoryConfig: Record<PostCategory, CategoryConfig> = {
-  technical: {
-    label: "Technical",
-    color: "var(--color-blue)",
-    bg: "var(--color-blue-light)",
-  },
-  "responsible-ai": {
-    label: "Responsible AI",
-    color: "var(--color-coral)",
-    bg: "var(--color-coral-light)",
-  },
-  strategy: {
-    label: "Strategy",
-    color: "var(--color-green)",
-    bg: "var(--color-green-light)",
-  },
-  research: {
-    label: "Research",
-    color: "var(--color-amber)",
-    bg: "var(--color-amber-light)",
-  },
-};
-
-function formatDate(dateStr: string): string {
-  return new Date(dateStr).toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
 
 export function PostCard({ post }: PostCardProps) {
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
-  const config = categoryConfig[post.category];
 
   return (
     <a
-      href={`https://blog.imtiaz.dev/${post.slug}`}
+      href={`${person.social.hashnode}/${post.slug}`}
       target="_blank"
       rel="noopener noreferrer"
       onMouseEnter={() => setHovered(true)}
@@ -62,53 +32,55 @@ export function PostCard({ post }: PostCardProps) {
         backgroundColor: hovered ? "var(--color-surface)" : "transparent",
         borderColor: "var(--color-border)",
       }}
-      className="flex flex-col gap-3 p-5 rounded-xl border transition-colors duration-200"
+      className="flex flex-col h-full p-5 rounded-xl border transition-colors duration-200"
     >
+      {/* Category chip */}
       <span
         style={{
           fontFamily: "var(--font-mono)",
-          color: config.color,
-          backgroundColor: config.bg,
+          color: "var(--color-brand)",
+          backgroundColor: "var(--color-brand-light)",
         }}
-        className="self-start inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium"
+        className="self-start inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium mb-3 shrink-0"
       >
-        {config.label}
+        {categoryLabel[post.category]}
       </span>
 
+      {/* Title */}
       <h3
-        style={{
-          fontFamily: "var(--font-serif)",
-          color: "var(--color-text-primary)",
-        }}
-        className="text-xl leading-snug"
+        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        className="text-xl leading-snug mb-3 shrink-0"
       >
         {post.title}
       </h3>
 
-      <p
-        style={{
-          fontFamily: "var(--font-sans)",
-          color: "var(--color-text-muted)",
-        }}
-        className="text-sm leading-relaxed flex-1"
-      >
-        {post.excerpt}
-      </p>
-
-      <div className="flex items-center justify-between">
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            color: "var(--color-text-muted)",
-          }}
-          className="text-[11px]"
+      {/* Excerpt: fixed 3-line area */}
+      <div className="h-[63px] overflow-hidden shrink-0">
+        <p
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+          className="text-sm leading-relaxed line-clamp-3"
         >
-          {formatDate(post.publishedAt)}
-        </span>
+          {post.excerpt}
+        </p>
+      </div>
 
+      {/* Spacer */}
+      <div className="flex-1" />
+
+      {/* Read link pinned to bottom */}
+      <div
+        className="flex items-center justify-between pt-4 mt-4 shrink-0"
+        style={{ borderTop: "1px solid var(--color-border)" }}
+      >
+        <span
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)" }}
+          className="text-[12px] font-medium"
+        >
+          Read on Hashnode
+        </span>
         <span
           style={{
-            color: hovered ? "var(--color-purple)" : "var(--color-text-muted)",
+            color: hovered ? "var(--color-brand)" : "var(--color-text-muted)",
             transition: "color 150ms ease",
             display: "flex",
           }}

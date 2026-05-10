@@ -1,18 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { motion, useMotionValue, useSpring } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 
-const INTERACTIVE_SELECTOR = "a, button, [role='button'], input, select, textarea, label";
+const INTERACTIVE = "a, button, [role='button'], input, select, textarea, label";
 
 export function CustomCursor() {
+  const cursorRef = useRef<HTMLDivElement>(null);
   const [active, setActive] = useState(false);
-  const [scaled, setScaled] = useState(false);
-
-  const rawX = useMotionValue(-100);
-  const rawY = useMotionValue(-100);
-  const x = useSpring(rawX, { damping: 28, stiffness: 700 });
-  const y = useSpring(rawY, { damping: 28, stiffness: 700 });
 
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -22,45 +16,75 @@ export function CustomCursor() {
     setActive(true);
     document.body.style.cursor = "none";
 
-    const onMouseMove = (e: MouseEvent) => {
-      rawX.set(e.clientX - 4);
-      rawY.set(e.clientY - 4);
+    const onMove = (e: MouseEvent) => {
+      const el = cursorRef.current;
+      if (!el) return;
+      el.style.left = `${e.clientX}px`;
+      el.style.top = `${e.clientY}px`;
     };
 
-    const onMouseOver = (e: MouseEvent) => {
-      const target = e.target as Element;
-      setScaled(!!target.closest(INTERACTIVE_SELECTOR));
+    const onOver = (e: MouseEvent) => {
+      const el = cursorRef.current;
+      if (!el) return;
+      const hit = !!(e.target as Element).closest(INTERACTIVE);
+      el.style.transform = hit
+        ? "translate(-50%, -50%) scale(1.5)"
+        : "translate(-50%, -50%) scale(1)";
     };
 
-    window.addEventListener("mousemove", onMouseMove);
-    window.addEventListener("mouseover", onMouseOver);
+    window.addEventListener("mousemove", onMove);
+    window.addEventListener("mouseover", onOver);
 
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseover", onMouseOver);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseover", onOver);
       document.body.style.cursor = "";
     };
-  }, [rawX, rawY]);
+  }, []);
 
   if (!active) return null;
 
   return (
-    <motion.div
+    <div
+      ref={cursorRef}
       style={{
         position: "fixed",
         top: 0,
         left: 0,
-        x,
-        y,
-        width: 8,
-        height: 8,
-        borderRadius: "50%",
-        backgroundColor: "var(--color-purple)",
+        width: 32,
+        height: 32,
         pointerEvents: "none",
         zIndex: 9999,
+        transform: "translate(-50%, -50%) scale(1)",
+        transition: "transform 200ms ease",
       }}
-      animate={{ scale: scaled ? 2 : 1 }}
-      transition={{ duration: 0.15, ease: "easeOut" }}
-    />
+    >
+      <svg
+        width="32"
+        height="32"
+        viewBox="0 0 32 32"
+        fill="none"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        {/* Left ear */}
+        <polygon points="4,0 0,9 9,9" fill="var(--color-brand)" />
+        {/* Right ear */}
+        <polygon points="28,0 23,9 32,9" fill="var(--color-brand)" />
+        {/* Left eye */}
+        <circle cx="11" cy="16" r="2" fill="var(--color-brand)" />
+        {/* Right eye */}
+        <circle cx="21" cy="16" r="2" fill="var(--color-brand)" />
+        {/* Nose */}
+        <polygon points="14,20 18,20 16,23" fill="var(--color-brand)" />
+        {/* Left whiskers */}
+        <line x1="0" y1="15" x2="9" y2="17" stroke="var(--color-brand)" strokeWidth="0.8" />
+        <line x1="0" y1="18" x2="9" y2="18.5" stroke="var(--color-brand)" strokeWidth="0.8" />
+        <line x1="0" y1="21" x2="9" y2="21" stroke="var(--color-brand)" strokeWidth="0.8" />
+        {/* Right whiskers */}
+        <line x1="32" y1="15" x2="23" y2="17" stroke="var(--color-brand)" strokeWidth="0.8" />
+        <line x1="32" y1="18" x2="23" y2="18.5" stroke="var(--color-brand)" strokeWidth="0.8" />
+        <line x1="32" y1="21" x2="23" y2="21" stroke="var(--color-brand)" strokeWidth="0.8" />
+      </svg>
+    </div>
   );
 }
