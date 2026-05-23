@@ -51,7 +51,7 @@ export function Hero() {
           className="flex flex-wrap gap-4"
         >
           <Link
-            href="/work"
+            href="/lab"
             style={{ backgroundColor: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
             className="inline-flex items-center px-6 py-3 rounded-lg text-white text-sm font-medium transition-opacity duration-150 hover:opacity-90"
           >
@@ -59,7 +59,7 @@ export function Hero() {
           </Link>
 
           <Link
-            href="/writing"
+            href="/signal"
             style={{
               borderColor: "var(--color-brand)",
               color: "var(--color-brand)",

@@ -10,10 +10,10 @@ import { person } from "@/lib/person";
 const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
 
 const NAV_LINKS = [
-  { label: "Work",    href: "/work"    },
-  { label: "Writing", href: "/writing" },
-  { label: "Stack",   href: "/stack"   },
-  { label: "About",   href: "/about"   },
+  { label: "Lab",    href: "/lab"    },
+  { label: "Signal", href: "/signal" },
+  { label: "Stack",  href: "/stack"  },
+  { label: "About",  href: "/about"  },
 ];
 
 function ThemeIcon({ theme }: { theme: Theme }) {
@@ -43,6 +43,13 @@ export function Nav() {
     playSound("toggle");
     cycleAudio();
   };
+
+  const handleEarthClick = () => {
+    playSound("click");
+    document.getElementById("earth")?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  const isHome = pathname === "/";
 
   return (
     <nav
@@ -85,6 +92,23 @@ export function Nav() {
                 </li>
               );
             })}
+
+            {isHome && (
+              <li>
+                <button
+                  type="button"
+                  onClick={handleEarthClick}
+                  onMouseEnter={() => playSound("hover")}
+                  style={{
+                    color: "var(--color-green, #16A34A)",
+                    fontFamily: "inherit",
+                  }}
+                  className="rounded-md px-3 py-1.5 text-sm transition-colors bg-transparent border-0 cursor-pointer"
+                >
+                  Earth
+                </button>
+              </li>
+            )}
           </ul>
 
           <button

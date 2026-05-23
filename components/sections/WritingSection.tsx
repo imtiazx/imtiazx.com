@@ -45,7 +45,7 @@ export function WritingSection() {
 
         <div className="mt-12 flex justify-end">
           <Link
-            href="/writing"
+            href="/signal"
             style={{ color: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
             className="inline-flex items-center gap-2 text-sm font-medium hover:gap-3 transition-all duration-150"
           >

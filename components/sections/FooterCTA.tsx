@@ -36,7 +36,7 @@ export function FooterCTA() {
           </p>
 
           <Link
-            href="/work"
+            href="/lab"
             style={{ backgroundColor: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
             className="inline-flex items-center px-8 py-3.5 rounded-lg text-white text-sm font-medium transition-opacity duration-150 hover:opacity-90"
           >
