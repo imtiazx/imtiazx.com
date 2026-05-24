@@ -42,7 +42,7 @@
   --font-sans: 'DM Sans', system-ui, sans-serif;
   --font-serif: 'DM Serif Display', Georgia, serif;
   --font-mono: 'JetBrains Mono', 'Cascadia Code', monospace;
-  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-display: var(--font-geist-sans), system-ui, sans-serif;
 
   /* Spacing (4px base unit) */
   --space-1: 4px;

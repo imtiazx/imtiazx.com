@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const GREETINGS = [
   "Hello",
@@ -12,92 +12,123 @@ const GREETINGS = [
   "Ciao",
   "안녕하세요",
   "Olá",
-  "হ্যালো",
+  "নমস্কার",
 ];
 
-const WORD_IN = 280;
-const WORD_HOLD = 380;
-const WORD_OUT = 180;
-const WORD_GAP = 60;
+const NAME = "imtiazx";
 
-const NAME_PAUSE = 400;
-const NAME_IN = 500;
-const NAME_HOLD_SOLO = 700;
-const X_IN = 300;
-const X_GLOW = 800;
-const NAME_HOLD_FULL = 1000;
+const TYPE_SPEED = 38;
+const HOLD_SHORT = 140;
+const DELETE_SPEED = 22;
+const GAP = 60;
+const NAME_HOLD = 950;
+const PRE_FADE = 120;
 const FADE_OUT = 400;
+const REDUCED_HOLD = 250;
 
-const REDUCED_HOLD = 300;
+function toGraphemes(s: string): string[] {
+  if (typeof Intl !== "undefined" && "Segmenter" in Intl) {
+    try {
+      const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+      return Array.from(seg.segment(s), (x) => x.segment);
+    } catch {
+      /* fall through */
+    }
+  }
+  return Array.from(s);
+}
 
 export function PageLoader() {
   const [visible, setVisible] = useState(true);
-  const [currentGreeting, setCurrentGreeting] = useState(-1);
-  const [showName, setShowName] = useState(false);
-  const [showX, setShowX] = useState(false);
-  const [showGlow, setShowGlow] = useState(false);
+  const [text, setText] = useState("");
+  const [isName, setIsName] = useState(false);
   const [exiting, setExiting] = useState(false);
+  const cancelRef = useRef(false);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
 
-    const timers: ReturnType<typeof setTimeout>[] = [];
-    const schedule = (delay: number, fn: () => void) => {
-      timers.push(setTimeout(fn, delay));
-    };
-
+    cancelRef.current = false;
     document.body.style.overflow = "hidden";
 
     const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const sleep = (ms: number) =>
+      new Promise<void>((resolve) => setTimeout(resolve, ms));
 
-    if (reduced) {
-      setShowName(true);
-      setShowX(true);
-      schedule(REDUCED_HOLD, () => setExiting(true));
-      schedule(REDUCED_HOLD + FADE_OUT, () => {
-        setVisible(false);
-        document.body.style.overflow = "";
-      });
-      return () => {
-        timers.forEach(clearTimeout);
-        document.body.style.overflow = "";
-      };
-    }
+    const typeIn = async (word: string) => {
+      const chars = toGraphemes(word);
+      for (let i = 1; i <= chars.length; i++) {
+        if (cancelRef.current) return;
+        setText(chars.slice(0, i).join(""));
+        await sleep(TYPE_SPEED);
+      }
+    };
 
-    let t = 0;
-    GREETINGS.forEach((_, i) => {
-      const start = t;
-      schedule(start, () => setCurrentGreeting(i));
-      schedule(start + WORD_IN + WORD_HOLD, () => {
-        setCurrentGreeting((prev) => (prev === i ? -1 : prev));
-      });
-      t += WORD_IN + WORD_HOLD + WORD_OUT + WORD_GAP;
-    });
+    const typeOut = async (word: string) => {
+      const chars = toGraphemes(word);
+      for (let i = chars.length - 1; i >= 0; i--) {
+        if (cancelRef.current) return;
+        setText(chars.slice(0, i).join(""));
+        await sleep(DELETE_SPEED);
+      }
+    };
 
-    const namePhaseStart = t + NAME_PAUSE;
-    schedule(namePhaseStart, () => setShowName(true));
-
-    const xPhaseStart = namePhaseStart + NAME_IN + NAME_HOLD_SOLO;
-    schedule(xPhaseStart, () => {
-      setShowX(true);
-      setShowGlow(true);
-    });
-    schedule(xPhaseStart + X_GLOW, () => setShowGlow(false));
-
-    const fadeStart = xPhaseStart + X_IN + X_GLOW + NAME_HOLD_FULL;
-    schedule(fadeStart, () => setExiting(true));
-    schedule(fadeStart + FADE_OUT, () => {
+    const finish = async () => {
+      setExiting(true);
+      await sleep(FADE_OUT);
+      if (cancelRef.current) return;
       setVisible(false);
       document.body.style.overflow = "";
-    });
+    };
+
+    const run = async () => {
+      if (reduced) {
+        setIsName(true);
+        setText(NAME);
+        await sleep(REDUCED_HOLD);
+        if (cancelRef.current) return;
+        await finish();
+        return;
+      }
+
+      for (const word of GREETINGS) {
+        if (cancelRef.current) return;
+        await typeIn(word);
+        await sleep(HOLD_SHORT);
+        await typeOut(word);
+        await sleep(GAP);
+      }
+
+      if (cancelRef.current) return;
+
+      setIsName(true);
+      await typeIn(NAME);
+      await sleep(NAME_HOLD);
+      await typeOut(NAME);
+      await sleep(PRE_FADE);
+      await finish();
+    };
+
+    void run();
 
     return () => {
-      timers.forEach(clearTimeout);
+      cancelRef.current = true;
       document.body.style.overflow = "";
     };
   }, []);
 
   if (!visible) return null;
+
+  const renderText = () => {
+    if (!isName) return text;
+    if (text.length <= 6) return text;
+    return (
+      <>
+        {text.slice(0, 6)}
+        <span style={{ color: "#EA580C" }}>{text.slice(6)}</span>
+      </>
+    );
+  };
 
   return (
     <div
@@ -114,126 +145,45 @@ export function PageLoader() {
         transition: `opacity ${FADE_OUT}ms ease-in`,
       }}
     >
-      {!showName && (
-        <div
+      <div
+        style={{
+          display: "inline-flex",
+          alignItems: "baseline",
+          fontFamily: "var(--font-mono), ui-monospace, Menlo, monospace",
+          fontSize: "clamp(1.8rem, 4.2vw, 3rem)",
+          color: "#1C1917",
+          fontWeight: 500,
+          letterSpacing: "-0.01em",
+          lineHeight: 1.2,
+          minHeight: "1.4em",
+        }}
+      >
+        <span style={{ whiteSpace: "pre" }}>{renderText()}</span>
+        <span
+          aria-hidden
+          className="loader-cursor"
           style={{
-            position: "relative",
-            width: "min(90vw, 800px)",
-            height: "1em",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-serif)",
-            fontSize: "clamp(2.5rem, 6vw, 4.5rem)",
-            color: "#1C1917",
-            fontWeight: 400,
-            letterSpacing: "-0.02em",
-            lineHeight: 1,
+            display: "inline-block",
+            width: "0.08em",
+            height: "0.95em",
+            backgroundColor: "#1C1917",
+            marginLeft: "0.06em",
+            transform: "translateY(0.12em)",
           }}
-        >
-          {GREETINGS.map((word, i) => {
-            const isActive = currentGreeting === i;
-            return (
-              <span
-                key={word}
-                style={{
-                  position: "absolute",
-                  left: "50%",
-                  top: "50%",
-                  transform: isActive
-                    ? "translate(-50%, -50%) scale(1)"
-                    : currentGreeting > i
-                      ? "translate(-50%, -50%) scale(1.08)"
-                      : "translate(-50%, -50%) scale(0.82)",
-                  opacity: isActive ? 1 : 0,
-                  transition: isActive
-                    ? `opacity ${WORD_IN}ms ease-out, transform ${WORD_IN}ms ease-out`
-                    : `opacity ${WORD_OUT}ms ease-in, transform ${WORD_OUT}ms ease-in`,
-                  whiteSpace: "nowrap",
-                }}
-              >
-                {word}
-              </span>
-            );
-          })}
-        </div>
-      )}
-
-      {showName && (
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "row",
-            alignItems: "baseline",
-            gap: 0,
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(3rem, 7vw, 5.5rem)",
-            color: "#1C1917",
-            letterSpacing: "-0.03em",
-            lineHeight: 1,
-          }}
-        >
-          <span
-            style={{
-              fontWeight: 300,
-              fontStyle: "italic",
-              opacity: 1,
-              transform: "translateY(0)",
-              transition: `opacity ${NAME_IN}ms ease-out, transform ${NAME_IN}ms ease-out`,
-              animation: `loaderNameIn ${NAME_IN}ms ease-out both`,
-            }}
-          >
-            imtiaz
-          </span>
-          {showX && (
-            <span
-              style={{
-                fontWeight: 300,
-                fontStyle: "italic",
-                color: "#EA580C",
-                display: "inline-block",
-                animation: `loaderXIn ${X_IN}ms ease-out both${
-                  showGlow ? `, loaderXGlow ${X_GLOW}ms ease-in-out both` : ""
-                }`,
-              }}
-            >
-              x
-            </span>
-          )}
-        </div>
-      )}
+        />
+      </div>
 
       <style jsx>{`
-        @keyframes loaderNameIn {
-          from {
-            opacity: 0;
-            transform: translateY(8px);
-          }
-          to {
+        @keyframes loaderCursorBlink {
+          0%, 50% {
             opacity: 1;
-            transform: translateY(0);
+          }
+          51%, 100% {
+            opacity: 0;
           }
         }
-        @keyframes loaderXIn {
-          from {
-            opacity: 0;
-            transform: scale(0.8);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-        @keyframes loaderXGlow {
-          0% {
-            text-shadow: 0 0 0px rgba(234, 88, 12, 0);
-          }
-          50% {
-            text-shadow: 0 0 20px rgba(234, 88, 12, 0.6);
-          }
-          100% {
-            text-shadow: 0 0 0px rgba(234, 88, 12, 0);
-          }
+        .loader-cursor {
+          animation: loaderCursorBlink 0.65s steps(1) infinite;
         }
       `}</style>
     </div>
