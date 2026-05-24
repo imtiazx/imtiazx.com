@@ -184,6 +184,9 @@ function TuxScene({ reduced }: { reduced: boolean }) {
     const svg = svgRef.current;
     if (!svg) return;
 
+    let xTos: Array<ReturnType<typeof gsap.quickTo>> = [];
+    let yTos: Array<ReturnType<typeof gsap.quickTo>> = [];
+
     const ctx = gsap.context(() => {
       if (reduced) {
         gsap.globalTimeline.pause();
@@ -318,7 +321,8 @@ function TuxScene({ reduced }: { reduced: boolean }) {
         },
       });
 
-      // Eye tracking on mousemove (mom + babies that have visible pupils)
+      // Eye tracking quickTo handlers (mom + babies with visible pupils).
+      // Created inside ctx so they're tracked and reverted with the context.
       const pupilTargets = [
         "#tux-mom-pupil-l",
         "#tux-mom-pupil-r",
@@ -329,28 +333,32 @@ function TuxScene({ reduced }: { reduced: boolean }) {
         "#tux-baby-3-pupil-l",
         "#tux-baby-3-pupil-r",
       ];
-      const xTos = pupilTargets.map((sel) =>
+      xTos = pupilTargets.map((sel) =>
         gsap.quickTo(sel, "x", { duration: 0.3, ease: "power3" })
       );
-      const yTos = pupilTargets.map((sel) =>
+      yTos = pupilTargets.map((sel) =>
         gsap.quickTo(sel, "y", { duration: 0.3, ease: "power3" })
       );
-
-      const onMove = (e: MouseEvent) => {
-        const rect = svg.getBoundingClientRect();
-        const nx = (e.clientX - rect.left) / rect.width - 0.5;
-        const ny = (e.clientY - rect.top) / rect.height - 0.5;
-        const dx = Math.max(-1, Math.min(1, nx * 2)) * 2;
-        const dy = Math.max(-1, Math.min(1, ny * 2)) * 2;
-        xTos.forEach((fn) => fn(dx));
-        yTos.forEach((fn) => fn(dy));
-      };
-
-      svg.addEventListener("mousemove", onMove);
-      ctx.add(() => svg.removeEventListener("mousemove", onMove));
     }, svg);
 
+    // Mousemove listener lives outside gsap.context to avoid a temporal
+    // dead zone on `ctx`. Cleanup happens in the effect return below.
+    const onMove = (e: MouseEvent) => {
+      const rect = svg.getBoundingClientRect();
+      const nx = (e.clientX - rect.left) / rect.width - 0.5;
+      const ny = (e.clientY - rect.top) / rect.height - 0.5;
+      const dx = Math.max(-1, Math.min(1, nx * 2)) * 2;
+      const dy = Math.max(-1, Math.min(1, ny * 2)) * 2;
+      xTos.forEach((fn) => fn(dx));
+      yTos.forEach((fn) => fn(dy));
+    };
+
+    if (!reduced) {
+      svg.addEventListener("mousemove", onMove);
+    }
+
     return () => {
+      svg.removeEventListener("mousemove", onMove);
       ctx.revert();
     };
   }, [reduced]);
