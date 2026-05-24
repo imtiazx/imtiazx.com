@@ -94,14 +94,17 @@ function WordReveal({
 
     let played = false;
     let split: SplitText | null = null;
+
     const ctx = gsap.context(() => {
       split = new SplitText(target, { type: "words" });
       gsap.set(split.words, { opacity: 0, y: 30, filter: "blur(8px)" });
+    }, root);
 
-      const trigger = () => {
-        if (played || !split) return;
-        played = true;
-        gsap.to(split.words, {
+    const trigger = () => {
+      if (played || !split) return;
+      played = true;
+      ctx.add(() => {
+        gsap.to(split!.words, {
           opacity: 1,
           y: 0,
           filter: "blur(0px)",
@@ -110,24 +113,24 @@ function WordReveal({
           ease: "power3.out",
           delay,
         });
-      };
+      });
+    };
 
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              trigger();
-              io.disconnect();
-            }
-          });
-        },
-        { threshold: 0.2 }
-      );
-      io.observe(root);
-      ctx.add(() => io.disconnect());
-    }, root);
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            trigger();
+            io.disconnect();
+          }
+        });
+      },
+      { threshold: 0.2 }
+    );
+    io.observe(root);
 
     return () => {
+      io.disconnect();
       split?.revert();
       ctx.revert();
     };
@@ -162,10 +165,12 @@ function Scramble({
     if (reduced) return;
 
     let played = false;
-    const ctx = gsap.context(() => {
-      const trigger = () => {
-        if (played) return;
-        played = true;
+    const ctx = gsap.context(() => {}, root);
+
+    const trigger = () => {
+      if (played) return;
+      played = true;
+      ctx.add(() => {
         gsap.to(target, {
           duration: 1,
           delay,
@@ -178,24 +183,24 @@ function Scramble({
           },
           ease: "none",
         });
-      };
+      });
+    };
 
-      const io = new IntersectionObserver(
-        (entries) => {
-          entries.forEach((entry) => {
-            if (entry.isIntersecting) {
-              trigger();
-              io.disconnect();
-            }
-          });
-        },
-        { threshold: 0.3 }
-      );
-      io.observe(root);
-      ctx.add(() => io.disconnect());
-    }, root);
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            trigger();
+            io.disconnect();
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+    io.observe(root);
 
     return () => {
+      io.disconnect();
       ctx.revert();
       target.textContent = original;
     };
