@@ -5,6 +5,7 @@ import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { projects } from "@/lib/projects";
 import { ProjectCard } from "@/components/ui/ProjectCard";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const containerVariants = {
   hidden: {},
@@ -22,12 +23,14 @@ export function ProjectsSection() {
   return (
     <section className="py-20 lg:py-28">
       <div className="container">
-        <h2
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
-          className="text-3xl md:text-4xl mb-12"
-        >
-          What I build
-        </h2>
+        <ScrollReveal variant="scramble" className="mb-12">
+          <h2
+            style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+            className="text-3xl md:text-4xl"
+          >
+            What I build
+          </h2>
+        </ScrollReveal>
 
         <motion.div
           variants={containerVariants}

@@ -17,6 +17,7 @@ export interface Social {
 
 export interface Person {
   name: string;
+  preferredName: string;
   handle: string;
   tagline: string;
   bio: string;
@@ -27,9 +28,10 @@ export interface Person {
 
 export const person: Person = {
   name: "Md Imtiaz Ahmed Mollah",
+  preferredName: "Imtiaz",
   handle: "imtiazx",
   tagline: "I engineer AI systems from prototype to production.",
-  bio: "Md Imtiaz Ahmed Mollah is an AI engineer with over four years of experience shipping production AI systems across enterprise and startup environments. At Accenture, he led responsible AI initiatives spanning bias auditing, safety evaluations, and governance frameworks for large-scale GenAI deployments across 25+ enterprise studies. He now focuses on open-source AI tooling, building frameworks that make production-grade RAG and agentic systems accessible to engineering teams worldwide.",
+  bio: "Imtiaz is an AI engineer at Accenture Industry X working on Generative AI R&D, where he builds RAG systems, agentic pipelines, and responsible AI evaluation tooling for enterprise deployment. His track record spans production rollouts across 25+ enterprise GenAI studies, open-source contributions to AI infrastructure, and podium finishes at global hackathons including 3rd place at LangFlow. He focuses on closing the gap between research prototypes and reliable, evaluated systems that engineering teams can actually ship.",
   metrics: [
     { value: "~5", label: "Years shipping production AI" },
     { value: "25+", label: "Enterprise GenAI studies" },
@@ -65,7 +67,7 @@ export const person: Person = {
   social: {
     github: "https://github.com/imtiazx",
     hashnode: "https://blog.imtiaz.dev",
-    linkedin: "",
+    linkedin: "https://www.linkedin.com/in/imtiazx",
     email: "imtiaz0x1@gmail.com",
   },
 };

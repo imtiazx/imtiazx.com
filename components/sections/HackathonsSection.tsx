@@ -6,6 +6,7 @@ import { ExternalLink } from "lucide-react";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
 import { useAudio } from "@/components/providers/AudioProvider";
 import { ChipTag } from "@/components/ui/ChipTag";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const containerVariants = {
   hidden: {},
@@ -126,13 +127,13 @@ function ActiveCard({ h }: { h: Hackathon }) {
             width: 8,
             height: 8,
             borderRadius: "50%",
-            backgroundColor: "#16A34A",
+            backgroundColor: "var(--color-green)",
           }}
         />
         <span
           style={{
             fontFamily: "var(--font-mono)",
-            color: "#16A34A",
+            color: "var(--color-green)",
           }}
           className="text-[10px] uppercase tracking-wider"
         >
@@ -287,12 +288,14 @@ export function HackathonsSection() {
     <section className="py-20 lg:py-28">
       <div className="container">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-3">
-          <h2
-            style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
-            className="text-3xl md:text-4xl"
-          >
-            What I compete in
-          </h2>
+          <ScrollReveal variant="scramble">
+            <h2
+              style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+              className="text-3xl md:text-4xl"
+            >
+              What I compete in
+            </h2>
+          </ScrollReveal>
           <span
             style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
             className="text-xs uppercase tracking-wider"

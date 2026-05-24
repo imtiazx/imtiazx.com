@@ -5,7 +5,10 @@ import { ThemeProvider } from "@/components/providers/ThemeProvider";
 import { AudioProvider } from "@/components/providers/AudioProvider";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
+import { PageTransition } from "@/components/layout/PageTransition";
 import { CustomCursor } from "@/components/ui/CustomCursor";
+import { PageLoader } from "@/components/ui/PageLoader";
+import { ScrollProgress } from "@/components/ui/ScrollProgress";
 
 const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
@@ -47,9 +50,11 @@ export default function RootLayout({
       <body className="antialiased mesh-texture">
         <ThemeProvider>
           <AudioProvider>
+            <PageLoader />
+            <ScrollProgress />
             <CustomCursor />
             <Nav />
-            <main>{children}</main>
+            <PageTransition>{children}</PageTransition>
             <Footer />
           </AudioProvider>
         </ThemeProvider>

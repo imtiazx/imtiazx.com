@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { person, type IdentityCard } from "@/lib/person";
+import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
 const containerVariants = {
   hidden: {},
@@ -68,12 +69,14 @@ export function IdentitySection() {
   return (
     <section className="py-20 lg:py-28">
       <div className="container">
-        <h2
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
-          className="text-3xl md:text-4xl mb-12"
-        >
-          What I bring
-        </h2>
+        <ScrollReveal variant="scramble" className="mb-12">
+          <h2
+            style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+            className="text-3xl md:text-4xl"
+          >
+            What I bring
+          </h2>
+        </ScrollReveal>
 
         <motion.div
           variants={containerVariants}

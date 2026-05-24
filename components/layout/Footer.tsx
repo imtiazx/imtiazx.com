@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Globe, Hash } from "lucide-react";
+import { Globe, Hash, ExternalLink } from "lucide-react";
 import { person } from "@/lib/person";
 
 export function Footer() {
@@ -15,7 +15,7 @@ export function Footer() {
         style={{ color: "var(--color-text-muted)" }}
       >
         <span>
-          {year} {person.name}
+          {year} {person.preferredName}
         </span>
 
         <div className="flex items-center gap-4">
@@ -32,6 +32,21 @@ export function Footer() {
               }}
             >
               <Globe size={16} />
+            </Link>
+          )}
+          {person.social.linkedin && (
+            <Link
+              href={person.social.linkedin}
+              target="_blank"
+              rel="noopener noreferrer"
+              aria-label="LinkedIn"
+              className="transition-colors"
+              style={{
+                color: "var(--color-text-muted)",
+                transitionDuration: "var(--transition-base)",
+              }}
+            >
+              <ExternalLink size={16} />
             </Link>
           )}
           {person.social.hashnode && (
