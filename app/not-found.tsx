@@ -104,7 +104,6 @@ export default function NotFound() {
           <Link
             href="/lab"
             onClick={() => playSound("click")}
-            onMouseEnter={() => playSound("hover")}
             style={{
               backgroundColor: "var(--color-brand)",
               color: "#FFFFFF",

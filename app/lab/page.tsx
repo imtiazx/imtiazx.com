@@ -81,7 +81,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
 
   return (
     <motion.article
-      onHoverStart={() => { setHovered(true); playSound("hover"); }}
+      onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}

@@ -124,7 +124,7 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
 
   return (
     <motion.div
-      onMouseEnter={() => { setHovered(true); playSound("hover"); }}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}

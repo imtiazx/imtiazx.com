@@ -3,7 +3,6 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useAudio } from "@/components/providers/AudioProvider";
-import { OrangeHole } from "@/components/ui/OrangeHole";
 
 interface Role {
   role: string;
@@ -67,28 +66,21 @@ export function Hero() {
 
   return (
     <section
-      className="relative flex items-end md:items-center"
+      className="relative flex items-center"
       style={{
         isolation: "isolate",
-        position: "relative",
-        overflow: "hidden",
         minHeight: "calc(100vh - 56px)",
       }}
     >
-      <OrangeHole />
-
       <div
         className="container relative w-full"
         style={{
-          paddingTop: "clamp(8rem, 18vw, 14rem)",
+          paddingTop: "clamp(6rem, 12vw, 8rem)",
           paddingBottom: "clamp(4rem, 8vw, 6rem)",
-          zIndex: 10,
+          zIndex: 1,
         }}
       >
-        <div
-          className="mx-auto md:mx-0 text-center md:text-left"
-          style={{ maxWidth: 820, position: "relative", zIndex: 10 }}
-        >
+        <div className="mx-auto md:mx-0 text-center md:text-left" style={{ maxWidth: 920 }}>
           {ROLES.map(({ role, progression }, lineIdx) => {
             const initial = prefersReducedMotion ? "visible" : "hidden";
             return (
@@ -99,10 +91,11 @@ export function Hero() {
                 animate="visible"
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "clamp(2.2rem, 4.6vw, 3.6rem)",
-                  lineHeight: 1.2,
+                  fontSize: "clamp(0.78rem, 3.4vw, 2.5rem)",
+                  lineHeight: 1.3,
                   letterSpacing: "-0.025em",
                   fontFeatureSettings: '"ss01" on, "cv11" on',
+                  whiteSpace: "nowrap",
                 }}
               >
                 <span

@@ -25,7 +25,7 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
   return (
     <motion.div
       variants={itemVariants}
-      onMouseEnter={() => { setHovered(true); playSound("hover"); }}
+      onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
         backgroundColor: "#2A1F1A",

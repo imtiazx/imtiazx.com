@@ -28,7 +28,7 @@ export function ProjectCard({ project }: ProjectCardProps) {
 
   return (
     <motion.div
-      onHoverStart={() => { setHovered(true); playSound("hover"); }}
+      onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}

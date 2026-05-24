@@ -5,17 +5,6 @@ import { Sun, Moon, Monitor } from "lucide-react";
 import { useAudio } from "@/components/providers/AudioProvider";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 
-const SYMBOL_POOL: string[] = [
-  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
-  "+", "-", "×", "÷", "=", "≠", "<", ">", "≤", "≥",
-  "π", "∑", "∫", "∂", "∞", "√", "∇", "Δ",
-  "θ", "λ", "μ", "σ", "α", "β", "γ", "φ", "ω", "ε",
-  "P(x)", "E[x]", "ln", "log", "mod", "σ²", "R²",
-  "β₀", "β₁", "H₀", "p<0.05", "χ²",
-  "∈", "∉", "⊂", "∪", "∩", "→", "⇒", "≡", "∀", "∃",
-];
-
-const POINT_COUNT = 320;
 const NAME = "imtiaz";
 const TYPE_BASE_MS = 70;
 const TYPE_JITTER_MS = 50;
@@ -23,71 +12,15 @@ const START_DELAY_MS = 300;
 const X_DELAY_MS = 120;
 const REDUCED_AUTO_DISMISS_MS = 1500;
 const DISMISS_UNMOUNT_MS = 950;
+const SAFETY_AUTO_DISMISS_MS = 12000;
 
 const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
-
-interface Point {
-  char: string;
-  fontSize: number;
-  baseAlpha: number;
-  nx: number;
-  ny: number;
-  distFromCenter: number;
-  driftSpeed: number;
-  driftRangeX: number;
-  driftRangeY: number;
-  phaseX: number;
-  phaseY: number;
-  pulseSpeed: number;
-  pulsePhase: number;
-}
 
 interface Ripple {
   id: number;
   x: number;
   y: number;
   delay: number;
-}
-
-function generatePoints(): Point[] {
-  const pts: Point[] = [];
-  const goldenAngle = Math.PI * (3 - Math.sqrt(5));
-  for (let i = 0; i < POINT_COUNT; i++) {
-    const r = Math.sqrt(i / POINT_COUNT);
-    const theta = i * goldenAngle;
-    pts.push({
-      char: SYMBOL_POOL[Math.floor(Math.random() * SYMBOL_POOL.length)],
-      fontSize: 11 + Math.floor(Math.random() * 3),
-      baseAlpha: 0.10 + Math.random() * 0.10,
-      nx: Math.cos(theta) * r,
-      ny: Math.sin(theta) * r,
-      distFromCenter: r,
-      driftSpeed: 0.35 + Math.random() * 0.55,
-      driftRangeX: 8 + Math.random() * 10,
-      driftRangeY: 6 + Math.random() * 10,
-      phaseX: Math.random() * Math.PI * 2,
-      phaseY: Math.random() * Math.PI * 2,
-      pulseSpeed: 0.6 + Math.random() * 0.9,
-      pulsePhase: Math.random() * Math.PI * 2,
-    });
-  }
-  return pts;
-}
-
-function parseHexOrRgb(raw: string): { r: number; g: number; b: number } | null {
-  const s = raw.trim();
-  if (!s) return null;
-  if (s.startsWith("#")) {
-    const hex = s.slice(1);
-    const v = hex.length === 3 ? hex.split("").map((c) => c + c).join("") : hex;
-    if (v.length !== 6) return null;
-    const num = parseInt(v, 16);
-    if (Number.isNaN(num)) return null;
-    return { r: (num >> 16) & 0xff, g: (num >> 8) & 0xff, b: num & 0xff };
-  }
-  const m = s.match(/rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)/);
-  if (m) return { r: +m[1], g: +m[2], b: +m[3] };
-  return null;
 }
 
 function ThemeIcon({ theme }: { theme: Theme }) {
@@ -108,12 +41,8 @@ export function PageLoader() {
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const audioStateRef = useRef(audioState);
   const audioCtxRef = useRef<AudioContext | null>(null);
-  const pointsRef = useRef<Point[]>([]);
-  const mousePosRef = useRef<{ x: number; y: number } | null>(null);
-  const rafRef = useRef<number | null>(null);
   const reducedRef = useRef(false);
   const dismissedRef = useRef(false);
   const rippleIdRef = useRef(0);
@@ -197,113 +126,24 @@ export function PageLoader() {
   useEffect(() => {
     if (typeof window === "undefined") return;
     reducedRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
-    if (pointsRef.current.length === 0) {
-      pointsRef.current = generatePoints();
-    }
+    const restoreOverflow = () => {
+      document.body.style.overflow = previousOverflow;
+    };
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
-    const canvas = canvasRef.current;
-    const ctx2d = canvas?.getContext("2d") ?? null;
 
-    let W = window.innerWidth;
-    let H = window.innerHeight;
+    // Safety net: never let the loader hold the body scroll lock indefinitely.
+    timeouts.push(setTimeout(() => beginDismiss(), SAFETY_AUTO_DISMISS_MS));
 
-    const resize = () => {
-      if (!canvas || !ctx2d) return;
-      W = window.innerWidth;
-      H = window.innerHeight;
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = Math.floor(W * dpr);
-      canvas.height = Math.floor(H * dpr);
-      canvas.style.width = W + "px";
-      canvas.style.height = H + "px";
-      ctx2d.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") beginDismiss();
     };
-
-    resize();
-    window.addEventListener("resize", resize);
-
-    const startTime = performance.now();
-
-    const draw = (nowMs: number) => {
-      if (!ctx2d) return;
-      const t = (nowMs - startTime) / 1000;
-      ctx2d.clearRect(0, 0, W, H);
-
-      const styles = getComputedStyle(document.documentElement);
-      const brand = styles.getPropertyValue("--color-brand").trim();
-      const dim = styles.getPropertyValue("--color-text-muted").trim();
-      const brandRgb = parseHexOrRgb(brand);
-
-      const cx = W / 2;
-      const cy = H / 2;
-      const cloudR = Math.min(W, H) * 0.45;
-
-      const mp = mousePosRef.current;
-
-      ctx2d.textAlign = "center";
-      ctx2d.textBaseline = "middle";
-
-      for (const p of pointsRef.current) {
-        const driftX = Math.sin(t * p.driftSpeed + p.phaseX) * p.driftRangeX;
-        const driftY = Math.cos(t * p.driftSpeed + p.phaseY) * p.driftRangeY;
-        const x = cx + p.nx * cloudR + driftX;
-        const y = cy + p.ny * cloudR + driftY;
-
-        const pulse = Math.sin(t * p.pulseSpeed + p.pulsePhase) * 0.12;
-
-        let prox = 0;
-        if (mp) {
-          const ddx = x - mp.x;
-          const ddy = y - mp.y;
-          const dist = Math.sqrt(ddx * ddx + ddy * ddy);
-          if (dist < 100) prox = 1;
-          else if (dist < 200) prox = 1 - (dist - 100) / 100;
-        }
-
-        const edgeFade = p.distFromCenter > 0.85
-          ? Math.max(0, 1 - ((p.distFromCenter - 0.85) / 0.15) * 0.6)
-          : 1;
-
-        const alpha = Math.min(
-          0.95,
-          Math.max(0, (p.baseAlpha + pulse) * edgeFade + prox * 0.55),
-        );
-
-        ctx2d.globalAlpha = alpha;
-        ctx2d.fillStyle = prox > 0.05 ? brand : dim;
-        ctx2d.font = `${p.fontSize}px var(--font-mono), JetBrains Mono, ui-monospace, monospace`;
-        if (prox > 0.3 && brandRgb) {
-          ctx2d.shadowColor = `rgba(${brandRgb.r}, ${brandRgb.g}, ${brandRgb.b}, ${0.6 * prox})`;
-          ctx2d.shadowBlur = 8 * prox;
-        } else {
-          ctx2d.shadowBlur = 0;
-        }
-        ctx2d.fillText(p.char, x, y);
-      }
-
-      ctx2d.shadowBlur = 0;
-      ctx2d.globalAlpha = 1;
-
-      if (!dismissedRef.current) {
-        rafRef.current = requestAnimationFrame(draw);
-      }
-    };
-
-    if (ctx2d) {
-      if (reducedRef.current) {
-        draw(performance.now());
-      } else {
-        rafRef.current = requestAnimationFrame(draw);
-      }
-    }
-
-    const onMove = (e: MouseEvent) => {
-      mousePosRef.current = { x: e.clientX, y: e.clientY };
-    };
-    window.addEventListener("mousemove", onMove);
+    window.addEventListener("keydown", onKey);
+    window.addEventListener("pagehide", restoreOverflow);
 
     if (reducedRef.current) {
       setTypedCount(NAME.length);
@@ -335,10 +175,9 @@ export function PageLoader() {
 
     return () => {
       timeouts.forEach(clearTimeout);
-      if (rafRef.current !== null) cancelAnimationFrame(rafRef.current);
-      window.removeEventListener("resize", resize);
-      window.removeEventListener("mousemove", onMove);
-      document.body.style.overflow = "";
+      window.removeEventListener("keydown", onKey);
+      window.removeEventListener("pagehide", restoreOverflow);
+      restoreOverflow();
     };
   }, [beginDismiss]);
 
@@ -391,17 +230,6 @@ export function PageLoader() {
           transition: "opacity 600ms ease 300ms",
         }}
       >
-        <canvas
-          ref={canvasRef}
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            pointerEvents: "none",
-          }}
-        />
-
         <div
           style={{
             position: "absolute",
@@ -531,12 +359,13 @@ export function PageLoader() {
           display: flex;
           align-items: center;
           justify-content: center;
+          animation: loaderSealPulse 3s ease-in-out infinite;
         }
         .loader-seal-inner {
           width: 94px;
           height: 94px;
           border-radius: 50%;
-          background-color: color-mix(in srgb, var(--color-bg) 96%, transparent);
+          background-color: color-mix(in srgb, var(--color-bg) 92%, transparent);
           border: 0.5px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
           display: flex;
           align-items: center;
@@ -561,6 +390,16 @@ export function PageLoader() {
           animation: loaderRippleExpand 700ms ease-out forwards;
           pointer-events: none;
         }
+        @keyframes loaderSealPulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brand) 0%, transparent);
+            border-color: color-mix(in srgb, var(--color-brand) 35%, transparent);
+          }
+          50% {
+            box-shadow: 0 0 24px 6px color-mix(in srgb, var(--color-brand) 32%, transparent);
+            border-color: color-mix(in srgb, var(--color-brand) 75%, transparent);
+          }
+        }
         @keyframes loaderCursorBlink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
@@ -578,6 +417,7 @@ export function PageLoader() {
           }
         }
         @media (prefers-reduced-motion: reduce) {
+          .loader-seal,
           .loader-cursor,
           .loader-ripple {
             animation: none !important;

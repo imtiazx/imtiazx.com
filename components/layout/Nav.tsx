@@ -84,7 +84,6 @@ export function Nav() {
                       textUnderlineOffset: "3px",
                     }}
                     className="rounded-md px-3 py-1.5 text-sm transition-colors"
-                    onMouseEnter={() => playSound("hover")}
                   >
                     {label}
                   </Link>
@@ -97,7 +96,6 @@ export function Nav() {
                 <button
                   type="button"
                   onClick={handleEarthClick}
-                  onMouseEnter={() => playSound("hover")}
                   style={{
                     color: "var(--color-green, #16A34A)",
                     fontFamily: "inherit",

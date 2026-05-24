@@ -12,7 +12,7 @@ import {
 import { Howl } from "howler";
 
 export type AudioState = "ambient" | "interactive" | "mute";
-export type SoundName = "click" | "hover" | "transition" | "toggle";
+export type SoundName = "click" | "transition" | "toggle";
 
 const CYCLE_ORDER: AudioState[] = ["ambient", "interactive", "mute"];
 
@@ -67,7 +67,7 @@ export function AudioProvider({ children }: { children: ReactNode }) {
       onplayerror: noop,
     });
 
-    const uiSounds: SoundName[] = ["hover", "transition", "toggle"];
+    const uiSounds: SoundName[] = ["transition", "toggle"];
     uiSounds.forEach((name) => {
       soundsRef.current[name] = new Howl({
         src: [`/audio/${name}.mp3`],

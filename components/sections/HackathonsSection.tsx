@@ -90,14 +90,13 @@ function CardShell({
 }: {
   children: React.ReactNode;
 }) {
-  const { playSound } = useAudio();
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
 
   return (
     <motion.div
       variants={itemVariants}
-      onHoverStart={() => { setHovered(true); playSound("hover"); }}
+      onHoverStart={() => setHovered(true)}
       onHoverEnd={() => setHovered(false)}
       whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
