@@ -5,11 +5,6 @@ import { Sun, Moon, Monitor } from "lucide-react";
 import { useAudio } from "@/components/providers/AudioProvider";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 
-/**
- * PageLoader -- interactive pre-home landing overlay.
- * Fires on every hard page load. User clicks to dismiss.
- */
-
 const SYMBOL_POOL: string[] = [
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
   "+", "-", "×", "÷", "=", "≠", "<", ">", "≤", "≥",
@@ -27,7 +22,6 @@ const TYPE_JITTER_MS = 50;
 const START_DELAY_MS = 300;
 const X_DELAY_MS = 120;
 const REDUCED_AUTO_DISMISS_MS = 1500;
-const HOVER_THROTTLE_MS = 200;
 const DISMISS_UNMOUNT_MS = 950;
 
 const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
@@ -39,7 +33,13 @@ interface Point {
   nx: number;
   ny: number;
   distFromCenter: number;
-  phaseOffset: number;
+  driftSpeed: number;
+  driftRangeX: number;
+  driftRangeY: number;
+  phaseX: number;
+  phaseY: number;
+  pulseSpeed: number;
+  pulsePhase: number;
 }
 
 interface Ripple {
@@ -62,7 +62,13 @@ function generatePoints(): Point[] {
       nx: Math.cos(theta) * r,
       ny: Math.sin(theta) * r,
       distFromCenter: r,
-      phaseOffset: Math.random() * Math.PI * 2,
+      driftSpeed: 0.35 + Math.random() * 0.55,
+      driftRangeX: 8 + Math.random() * 10,
+      driftRangeY: 6 + Math.random() * 10,
+      phaseX: Math.random() * Math.PI * 2,
+      phaseY: Math.random() * Math.PI * 2,
+      pulseSpeed: 0.6 + Math.random() * 0.9,
+      pulsePhase: Math.random() * Math.PI * 2,
     });
   }
   return pts;
@@ -85,9 +91,9 @@ function parseHexOrRgb(raw: string): { r: number; g: number; b: number } | null 
 }
 
 function ThemeIcon({ theme }: { theme: Theme }) {
-  if (theme === "dark") return <Moon size={16} />;
-  if (theme === "system") return <Monitor size={16} />;
-  return <Sun size={16} />;
+  if (theme === "dark") return <Moon size={14} />;
+  if (theme === "system") return <Monitor size={14} />;
+  return <Sun size={14} />;
 }
 
 export function PageLoader() {
@@ -109,7 +115,6 @@ export function PageLoader() {
   const mousePosRef = useRef<{ x: number; y: number } | null>(null);
   const rafRef = useRef<number | null>(null);
   const reducedRef = useRef(false);
-  const lastHoverSoundRef = useRef(0);
   const dismissedRef = useRef(false);
   const rippleIdRef = useRef(0);
 
@@ -138,30 +143,6 @@ export function PageLoader() {
     return true;
   }, []);
 
-  const playHoverSound = useCallback(() => {
-    if (!canPlayAudio()) return;
-    const ctx = ensureAudio();
-    if (!ctx) return;
-    if (ctx.state === "suspended") ctx.resume().catch(() => {});
-    try {
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.linearRampToValueAtTime(1200, now + 0.08);
-      const gain = ctx.createGain();
-      gain.gain.setValueAtTime(0, now);
-      gain.gain.linearRampToValueAtTime(0.04, now + 0.01);
-      gain.gain.linearRampToValueAtTime(0, now + 0.1);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.12);
-    } catch {
-      // ignore
-    }
-  }, [canPlayAudio, ensureAudio]);
-
   const playClickSound = useCallback(() => {
     if (!canPlayAudio()) return;
     const ctx = ensureAudio();
@@ -169,31 +150,36 @@ export function PageLoader() {
     if (ctx.state === "suspended") ctx.resume().catch(() => {});
     try {
       const now = ctx.currentTime;
-      // Layer 1: noise transient
-      const bufSize = Math.max(1, Math.floor(ctx.sampleRate * 0.04));
+
+      // Layer 1: noise transient. White noise shaped with exponential decay
+      // (time constant 0.007s), gain 0.28, duration 25ms.
+      const bufSize = Math.max(1, Math.floor(ctx.sampleRate * 0.025));
       const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
       const data = noiseBuf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) data[i] = Math.random() * 2 - 1;
+      for (let i = 0; i < bufSize; i++) {
+        const tt = i / ctx.sampleRate;
+        data[i] = (Math.random() * 2 - 1) * Math.exp(-tt / 0.007);
+      }
       const noiseSrc = ctx.createBufferSource();
       noiseSrc.buffer = noiseBuf;
       const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.3, now);
-      noiseGain.gain.exponentialRampToValueAtTime(0.001, now + 0.03);
+      noiseGain.gain.setValueAtTime(0.28, now);
       noiseSrc.connect(noiseGain);
       noiseGain.connect(ctx.destination);
       noiseSrc.start(now);
-      noiseSrc.stop(now + 0.05);
-      // Layer 2: tonal body
+      noiseSrc.stop(now + 0.03);
+
+      // Layer 2: tonal body. Sine 1400Hz, peak 0.15, exp decay to 0.001 at +0.10s.
       const osc = ctx.createOscillator();
       osc.type = "sine";
-      osc.frequency.setValueAtTime(1200, now);
+      osc.frequency.setValueAtTime(1400, now);
       const oscGain = ctx.createGain();
-      oscGain.gain.setValueAtTime(0.18, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+      oscGain.gain.setValueAtTime(0.15, now);
+      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
       osc.connect(oscGain);
       oscGain.connect(ctx.destination);
       osc.start(now);
-      osc.stop(now + 0.14);
+      osc.stop(now + 0.11);
     } catch {
       // ignore
     }
@@ -261,11 +247,12 @@ export function PageLoader() {
       ctx2d.textBaseline = "middle";
 
       for (const p of pointsRef.current) {
-        const x = cx + p.nx * cloudR;
-        const y = cy + p.ny * cloudR;
+        const driftX = Math.sin(t * p.driftSpeed + p.phaseX) * p.driftRangeX;
+        const driftY = Math.cos(t * p.driftSpeed + p.phaseY) * p.driftRangeY;
+        const x = cx + p.nx * cloudR + driftX;
+        const y = cy + p.ny * cloudR + driftY;
 
-        const wavePhase = t / 1.8 - p.distFromCenter * 2.2 + p.phaseOffset;
-        const wave = (Math.sin(wavePhase) + 1) * 0.5;
+        const pulse = Math.sin(t * p.pulseSpeed + p.pulsePhase) * 0.12;
 
         let prox = 0;
         if (mp) {
@@ -282,7 +269,7 @@ export function PageLoader() {
 
         const alpha = Math.min(
           0.95,
-          p.baseAlpha * edgeFade + wave * 0.22 + prox * 0.55,
+          Math.max(0, (p.baseAlpha + pulse) * edgeFade + prox * 0.55),
         );
 
         ctx2d.globalAlpha = alpha;
@@ -300,24 +287,6 @@ export function PageLoader() {
       ctx2d.shadowBlur = 0;
       ctx2d.globalAlpha = 1;
 
-      if (brandRgb) {
-        const bigGlow = (Math.sin(t * 0.5) + 1) * 0.5;
-        ctx2d.lineWidth = 12 + bigGlow * 10;
-        ctx2d.strokeStyle = `rgba(${brandRgb.r}, ${brandRgb.g}, ${brandRgb.b}, ${0.05 + bigGlow * 0.05})`;
-        ctx2d.beginPath();
-        ctx2d.arc(cx, cy, cloudR, 0, Math.PI * 2);
-        ctx2d.stroke();
-
-        ctx2d.lineWidth = 1;
-        ctx2d.strokeStyle = `rgba(${brandRgb.r}, ${brandRgb.g}, ${brandRgb.b}, 0.35)`;
-        ctx2d.setLineDash([6, 14]);
-        ctx2d.lineDashOffset = -t * 8;
-        ctx2d.beginPath();
-        ctx2d.arc(cx, cy, cloudR, 0, Math.PI * 2);
-        ctx2d.stroke();
-        ctx2d.setLineDash([]);
-      }
-
       if (!dismissedRef.current) {
         rafRef.current = requestAnimationFrame(draw);
       }
@@ -333,23 +302,6 @@ export function PageLoader() {
 
     const onMove = (e: MouseEvent) => {
       mousePosRef.current = { x: e.clientX, y: e.clientY };
-
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const cx = w / 2;
-      const cy = h / 2;
-      const cloudR = Math.min(w, h) * 0.45;
-      const dx = e.clientX - cx;
-      const dy = e.clientY - cy;
-      const distFromCenter = Math.sqrt(dx * dx + dy * dy);
-
-      if (distFromCenter < cloudR + 60) {
-        const now = performance.now();
-        if (now - lastHoverSoundRef.current > HOVER_THROTTLE_MS) {
-          lastHoverSoundRef.current = now;
-          playHoverSound();
-        }
-      }
     };
     window.addEventListener("mousemove", onMove);
 
@@ -388,7 +340,7 @@ export function PageLoader() {
       window.removeEventListener("mousemove", onMove);
       document.body.style.overflow = "";
     };
-  }, [beginDismiss, playHoverSound]);
+  }, [beginDismiss]);
 
   const handleOverlayClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (dismissedRef.current) return;
@@ -463,8 +415,8 @@ export function PageLoader() {
             pointerEvents: "none",
           }}
         >
-          <div className="loader-ring" aria-hidden>
-            <div className="loader-inner">
+          <div className="loader-seal" aria-hidden>
+            <div className="loader-seal-inner">
               <svg viewBox="0 0 44 44" width="44" height="44" fill="none" aria-hidden>
                 <polyline
                   points="14,12 28,20 14,28"
@@ -489,8 +441,8 @@ export function PageLoader() {
           <div
             style={{
               fontFamily: "var(--font-mono), ui-monospace, Menlo, monospace",
-              fontSize: 24,
-              fontWeight: 500,
+              fontSize: 26,
+              fontWeight: 700,
               letterSpacing: "0.04em",
               lineHeight: 1.2,
               color: "var(--color-text-primary)",
@@ -499,8 +451,8 @@ export function PageLoader() {
               minHeight: "1.4em",
             }}
           >
-            <span style={{ whiteSpace: "pre" }}>{NAME.slice(0, typedCount)}</span>
-            {showX && <span style={{ color: "var(--color-brand)" }}>x</span>}
+            <span style={{ whiteSpace: "pre", fontWeight: 700 }}>{NAME.slice(0, typedCount)}</span>
+            {showX && <span style={{ color: "var(--color-brand)", fontWeight: 700 }}>x</span>}
             {showCursor && (
               <span
                 aria-hidden
@@ -508,6 +460,7 @@ export function PageLoader() {
                 style={{
                   color: "var(--color-brand)",
                   marginLeft: "0.05em",
+                  fontWeight: 700,
                 }}
               >
                 |
@@ -526,8 +479,8 @@ export function PageLoader() {
           position: "absolute",
           top: 16,
           right: 16,
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
@@ -569,7 +522,7 @@ export function PageLoader() {
       </div>
 
       <style jsx>{`
-        .loader-ring {
+        .loader-seal {
           position: relative;
           width: 110px;
           height: 110px;
@@ -578,13 +531,12 @@ export function PageLoader() {
           display: flex;
           align-items: center;
           justify-content: center;
-          animation: loaderRingPulse 3s ease-in-out infinite;
         }
-        .loader-inner {
+        .loader-seal-inner {
           width: 94px;
           height: 94px;
           border-radius: 50%;
-          background-color: color-mix(in srgb, var(--color-bg) 92%, transparent);
+          background-color: color-mix(in srgb, var(--color-bg) 96%, transparent);
           border: 0.5px solid color-mix(in srgb, var(--color-brand) 18%, transparent);
           display: flex;
           align-items: center;
@@ -609,15 +561,6 @@ export function PageLoader() {
           animation: loaderRippleExpand 700ms ease-out forwards;
           pointer-events: none;
         }
-        @keyframes loaderRingPulse {
-          0%, 100% {
-            box-shadow: 0 0 0 0 color-mix(in srgb, var(--color-brand) 0%, transparent);
-          }
-          50% {
-            box-shadow: 0 0 22px 6px color-mix(in srgb, var(--color-brand) 28%, transparent);
-            border-color: color-mix(in srgb, var(--color-brand) 75%, transparent);
-          }
-        }
         @keyframes loaderCursorBlink {
           0%, 100% { opacity: 1; }
           50% { opacity: 0; }
@@ -635,7 +578,6 @@ export function PageLoader() {
           }
         }
         @media (prefers-reduced-motion: reduce) {
-          .loader-ring,
           .loader-cursor,
           .loader-ripple {
             animation: none !important;

@@ -3,91 +3,158 @@
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { useAudio } from "@/components/providers/AudioProvider";
+import { OrangeHole } from "@/components/ui/OrangeHole";
 
-const ROLES: { role: string; progression: string }[] = [
+interface Role {
+  role: string;
+  progression: string;
+}
+
+const ROLES: Role[] = [
   { role: "Data Scientist",            progression: "origin"     },
   { role: "Generative AI Engineer",    progression: "evolution"  },
   { role: "Forward Deployed Engineer", progression: "trajectory" },
 ];
 
+const LINE_DELAYS = [0, 1.2, 2.6];
+const PHILOSOPHY_DELAY = 3.8;
+const CTA_DELAY = 4.2;
+const CHAR_STAGGER = 0.025;
+
+const charVariants = {
+  hidden: { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { duration: 0.15, ease: "easeOut" as const },
+  },
+};
+
+function renderChars(text: string, keyPrefix: string) {
+  return Array.from(text).map((c, i) => (
+    <motion.span
+      key={`${keyPrefix}-${i}`}
+      variants={charVariants}
+      style={{ display: "inline-block", whiteSpace: "pre" }}
+    >
+      {c === " " ? " " : c}
+    </motion.span>
+  ));
+}
+
 export function Hero() {
   const prefersReducedMotion = useReducedMotion() ?? false;
   const { playSound } = useAudio();
 
-  const lineInitial = prefersReducedMotion ? { opacity: 1, y: 0 } : { opacity: 0, y: 16 };
+  const lineParent = (delay: number) =>
+    prefersReducedMotion
+      ? { hidden: {}, visible: {} }
+      : {
+          hidden: {},
+          visible: {
+            transition: {
+              staggerChildren: CHAR_STAGGER,
+              delayChildren: delay,
+            },
+          },
+        };
+
   const fadeInitial = prefersReducedMotion ? { opacity: 1 } : { opacity: 0 };
-  const lineTransition = (delay: number) => ({
-    duration: 0.7,
+  const fadeTransition = (delay: number) => ({
+    duration: 0.6,
     ease: [0.25, 0.1, 0.25, 1] as [number, number, number, number],
-    delay,
+    delay: prefersReducedMotion ? 0 : delay,
   });
 
   return (
     <section
-      className="relative flex items-center min-h-screen"
-      style={{ isolation: "isolate" }}
+      className="relative flex items-end md:items-center"
+      style={{
+        isolation: "isolate",
+        position: "relative",
+        overflow: "hidden",
+        minHeight: "calc(100vh - 56px)",
+      }}
     >
+      <OrangeHole />
+
       <div
         className="container relative w-full"
         style={{
-          paddingTop: "clamp(6rem, 12vw, 8rem)",
+          paddingTop: "clamp(8rem, 18vw, 14rem)",
           paddingBottom: "clamp(4rem, 8vw, 6rem)",
-          zIndex: 1,
+          zIndex: 10,
         }}
       >
-        <div className="mx-auto md:mx-0 text-center md:text-left" style={{ maxWidth: 820 }}>
-          {ROLES.map(({ role, progression }, i) => (
-            <motion.div
-              key={role}
-              initial={lineInitial}
-              animate={{ opacity: 1, y: 0 }}
-              transition={lineTransition(0.1 + i * 0.12)}
-              style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "clamp(2.2rem, 4.6vw, 3.6rem)",
-                lineHeight: 1.2,
-                letterSpacing: "-0.025em",
-                fontFeatureSettings: '"ss01" on, "cv11" on',
-              }}
-            >
-              <span
+        <div
+          className="mx-auto md:mx-0 text-center md:text-left"
+          style={{ maxWidth: 820, position: "relative", zIndex: 10 }}
+        >
+          {ROLES.map(({ role, progression }, lineIdx) => {
+            const initial = prefersReducedMotion ? "visible" : "hidden";
+            return (
+              <motion.div
+                key={role}
+                variants={lineParent(LINE_DELAYS[lineIdx])}
+                initial={initial}
+                animate="visible"
                 style={{
-                  color: "var(--color-text-primary)",
-                  fontWeight: 500,
+                  fontFamily: "var(--font-display)",
+                  fontSize: "clamp(2.2rem, 4.6vw, 3.6rem)",
+                  lineHeight: 1.2,
+                  letterSpacing: "-0.025em",
+                  fontFeatureSettings: '"ss01" on, "cv11" on',
                 }}
               >
-                {role}
-              </span>
-              <span
-                style={{
-                  color: "var(--color-text-muted)",
-                  fontWeight: 300,
-                }}
-              >
-                {" by "}
-              </span>
-              <span
-                style={{
-                  color: "var(--color-brand)",
-                  opacity: 0.9,
-                  fontWeight: 500,
-                }}
-              >
-                {progression}
-                <span style={{ color: "var(--color-text-muted)", fontWeight: 300, opacity: 0.6 }}>.</span>
-              </span>
-            </motion.div>
-          ))}
+                <span
+                  style={{
+                    color: "var(--color-text-primary)",
+                    fontWeight: 500,
+                  }}
+                >
+                  {renderChars(role, `role-${lineIdx}`)}
+                </span>
+                <span
+                  style={{
+                    color: "var(--color-text-muted)",
+                    fontWeight: 300,
+                  }}
+                >
+                  {renderChars(" by ", `by-${lineIdx}`)}
+                </span>
+                <span
+                  className="prog-word"
+                  style={{
+                    color: "var(--color-brand)",
+                    opacity: 0.9,
+                    fontWeight: 500,
+                  }}
+                >
+                  {renderChars(progression, `prog-${lineIdx}`)}
+                </span>
+                <motion.span
+                  variants={charVariants}
+                  style={{
+                    color: "var(--color-text-muted)",
+                    fontWeight: 300,
+                    opacity: 0.6,
+                    display: "inline-block",
+                  }}
+                >
+                  .
+                </motion.span>
+              </motion.div>
+            );
+          })}
 
           <motion.p
             initial={fadeInitial}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.7, ease: "easeOut", delay: 0.55 }}
+            transition={fadeTransition(PHILOSOPHY_DELAY)}
             style={{
               fontFamily: "var(--font-sans)",
-              fontSize: "clamp(0.95rem, 1.45vw, 1.05rem)",
-              color: "var(--color-text-muted)",
-              lineHeight: 1.7,
+              fontSize: "clamp(0.95rem, 1.45vw, 1.125rem)",
+              color: "var(--color-text-secondary)",
+              lineHeight: 1.65,
               maxWidth: 560,
               fontWeight: 400,
               marginTop: "clamp(2rem, 4vw, 2.75rem)",
@@ -100,7 +167,7 @@ export function Hero() {
           <motion.div
             initial={fadeInitial}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.6, ease: "easeOut", delay: 0.8 }}
+            transition={fadeTransition(CTA_DELAY)}
             className="flex flex-wrap gap-4 justify-center md:justify-start"
             style={{ marginTop: "clamp(2.25rem, 4vw, 3rem)" }}
           >

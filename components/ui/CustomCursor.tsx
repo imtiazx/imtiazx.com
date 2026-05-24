@@ -5,10 +5,6 @@ import { gsap } from "gsap";
 
 const INTERACTIVE_SELECTOR =
   "a, button, [role='button'], input, select, textarea, label, .interactive";
-const TEXT_SELECTOR =
-  "h1, h2, h3, h4, h5, h6, p, blockquote, li, span, em, strong";
-
-type HoverMode = "default" | "interactive" | "text";
 
 export function CustomCursor() {
   const ringWrapRef = useRef<HTMLDivElement>(null);
@@ -20,12 +16,13 @@ export function CustomCursor() {
   useEffect(() => {
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const touchOnly = window.matchMedia("(hover: none)").matches;
-    if (reducedMotion || touchOnly) return;
+    const coarse    = window.matchMedia("(pointer: coarse)").matches;
+    if (reducedMotion || touchOnly || coarse) return;
 
-    const ringWrap = ringWrapRef.current;
-    const dotWrap = dotWrapRef.current;
+    const ringWrap  = ringWrapRef.current;
+    const dotWrap   = dotWrapRef.current;
     const ringInner = ringInnerRef.current;
-    const dotInner = dotInnerRef.current;
+    const dotInner  = dotInnerRef.current;
     if (!ringWrap || !dotWrap || !ringInner || !dotInner) return;
 
     setActive(true);
@@ -33,35 +30,20 @@ export function CustomCursor() {
 
     const ringX = gsap.quickTo(ringWrap, "x", { duration: 0.5, ease: "power3" });
     const ringY = gsap.quickTo(ringWrap, "y", { duration: 0.5, ease: "power3" });
-    const dotX = gsap.quickTo(dotWrap, "x", { duration: 0.1, ease: "power3" });
-    const dotY = gsap.quickTo(dotWrap, "y", { duration: 0.1, ease: "power3" });
+    const dotX  = gsap.quickTo(dotWrap,  "x", { duration: 0.1, ease: "power3" });
+    const dotY  = gsap.quickTo(dotWrap,  "y", { duration: 0.1, ease: "power3" });
 
-    let mode: HoverMode = "default";
+    let isInteractive = false;
 
-    const applyMode = (next: HoverMode) => {
-      if (next === mode) return;
-      mode = next;
-      if (next === "interactive") {
-        ringInner.style.transform = "scale(2.5)";
-        ringInner.style.opacity = "0.5";
-        ringInner.style.mixBlendMode = "normal";
-        ringInner.style.background = "transparent";
-        ringInner.style.borderColor = "var(--color-brand)";
-        dotInner.style.transform = "scale(0)";
-      } else if (next === "text") {
+    const applyInteractive = (next: boolean) => {
+      if (next === isInteractive) return;
+      isInteractive = next;
+      if (next) {
         ringInner.style.transform = "scale(1.5)";
-        ringInner.style.opacity = "1";
-        ringInner.style.mixBlendMode = "difference";
-        ringInner.style.background = "#FFFFFF";
-        ringInner.style.borderColor = "transparent";
-        dotInner.style.transform = "scale(0)";
+        ringInner.style.opacity = "0.9";
       } else {
         ringInner.style.transform = "scale(1)";
-        ringInner.style.opacity = "1";
-        ringInner.style.mixBlendMode = "normal";
-        ringInner.style.background = "transparent";
-        ringInner.style.borderColor = "var(--color-brand)";
-        dotInner.style.transform = "scale(1)";
+        ringInner.style.opacity = "0.6";
       }
     };
 
@@ -75,13 +57,7 @@ export function CustomCursor() {
     const onOver = (e: MouseEvent) => {
       const target = e.target as Element | null;
       if (!target || typeof target.closest !== "function") return;
-      if (target.closest(INTERACTIVE_SELECTOR)) {
-        applyMode("interactive");
-      } else if (target.closest(TEXT_SELECTOR)) {
-        applyMode("text");
-      } else {
-        applyMode("default");
-      }
+      applyInteractive(!!target.closest(INTERACTIVE_SELECTOR));
     };
 
     const onLeaveDoc = () => {
@@ -127,18 +103,19 @@ export function CustomCursor() {
       <div ref={ringWrapRef} style={wrapStyle}>
         <div
           ref={ringInnerRef}
+          className="cursor-outer"
           style={{
-            width: 32,
-            height: 32,
-            marginLeft: -16,
-            marginTop: -16,
+            width: 28,
+            height: 28,
+            marginLeft: -14,
+            marginTop: -14,
             borderRadius: "50%",
             border: "1.5px solid var(--color-brand)",
             background: "transparent",
+            opacity: 0.6,
             transformOrigin: "center",
             transform: "scale(1)",
-            transition:
-              "transform 0.3s ease, opacity 0.3s ease, background 0.3s ease, border-color 0.3s ease, mix-blend-mode 0.3s ease",
+            transition: "transform 0.25s ease, opacity 0.25s ease",
             willChange: "transform, opacity",
           }}
         />
@@ -146,16 +123,16 @@ export function CustomCursor() {
       <div ref={dotWrapRef} style={wrapStyle}>
         <div
           ref={dotInnerRef}
+          className="cursor-inner"
           style={{
-            width: 6,
-            height: 6,
-            marginLeft: -3,
-            marginTop: -3,
+            width: 5,
+            height: 5,
+            marginLeft: -2.5,
+            marginTop: -2.5,
             borderRadius: "50%",
             background: "var(--color-brand)",
             transformOrigin: "center",
             transform: "scale(1)",
-            transition: "transform 0.3s ease, opacity 0.3s ease",
             willChange: "transform, opacity",
           }}
         />
