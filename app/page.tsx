@@ -1,5 +1,4 @@
 import { Hero } from "@/components/sections/Hero";
-import { MetricsBar } from "@/components/sections/MetricsBar";
 import { ProjectsSection } from "@/components/sections/ProjectsSection";
 import { HackathonsSection } from "@/components/sections/HackathonsSection";
 import { IdentitySection } from "@/components/sections/IdentitySection";
@@ -14,7 +13,6 @@ export default function Home() {
     <>
       <ScrollBackground />
       <div id="hero"><Hero /></div>
-      <div id="metrics"><MetricsBar /></div>
       <div id="projects"><ProjectsSection /></div>
       <div id="hackathons"><HackathonsSection /></div>
       <div id="identity"><IdentitySection /></div>

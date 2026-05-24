@@ -2,7 +2,9 @@
 
 import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
+import { Globe, ExternalLink } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { person } from "@/lib/person";
 
 // ---------------------------------------------------------------------------
 // Bio
@@ -90,6 +92,38 @@ function CodeBlock() {
   );
 }
 
+function SocialButton({
+  href,
+  icon,
+  label,
+}: {
+  href: string;
+  icon: React.ReactNode;
+  label: string;
+}) {
+  const [hovered, setHovered] = useState(false);
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        fontFamily: "var(--font-sans)",
+        color: hovered ? "var(--color-brand)" : "var(--color-text-muted)",
+        borderColor: hovered ? "var(--color-brand)" : "var(--color-border)",
+        transform: hovered ? "translateY(-2px)" : "translateY(0)",
+        transition: "color 200ms ease, border-color 200ms ease, transform 200ms ease",
+      }}
+      className="inline-flex items-center gap-2 rounded-md border px-3 py-1.5 text-[13px]"
+    >
+      {icon}
+      {label}
+    </a>
+  );
+}
+
 function BioSection() {
   return (
     <section className="mt-12">
@@ -137,6 +171,21 @@ function BioSection() {
               are good. He writes to think clearly, ships to learn faster, and treats every
               engagement as a chance to leave the system better documented than he found it.
             </p>
+          </ScrollReveal>
+
+          <ScrollReveal variant="fadeUp" delay={0.2}>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <SocialButton
+                href={person.social.github}
+                icon={<Globe size={14} />}
+                label="github.com/imtiazx"
+              />
+              <SocialButton
+                href={person.social.linkedin}
+                icon={<ExternalLink size={14} />}
+                label="linkedin.com/in/imtiazx"
+              />
+            </div>
           </ScrollReveal>
         </div>
 

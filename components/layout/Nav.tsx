@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sun, Moon, Monitor, Volume2, VolumeX, Music, Globe, ExternalLink } from "lucide-react";
+import { Sun, Moon, Monitor, Volume2, VolumeX, Music } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 import { useAudio, type AudioState } from "@/components/providers/AudioProvider";
 import { person } from "@/lib/person";
@@ -110,34 +110,6 @@ export function Nav() {
             )}
           </ul>
 
-          {person.social.github && (
-            <Link
-              href={person.social.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              onMouseEnter={() => playSound("hover")}
-              onClick={() => playSound("click")}
-              className="nav-social flex h-8 w-8 items-center justify-center rounded-md"
-            >
-              <Globe size={16} />
-            </Link>
-          )}
-
-          {person.social.linkedin && (
-            <Link
-              href={person.social.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              onMouseEnter={() => playSound("hover")}
-              onClick={() => playSound("click")}
-              className="nav-social flex h-8 w-8 items-center justify-center rounded-md"
-            >
-              <ExternalLink size={16} />
-            </Link>
-          )}
-
           <button
             onClick={handleThemeToggle}
             className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
@@ -194,13 +166,6 @@ export function Nav() {
         }
         @media (prefers-reduced-motion: reduce) {
           .nav-shimmer { animation: none; }
-        }
-        .nav-social {
-          color: var(--color-text-muted);
-          transition: color 200ms ease;
-        }
-        .nav-social:hover {
-          color: var(--color-brand);
         }
       `}</style>
     </nav>
