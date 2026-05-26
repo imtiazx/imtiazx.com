@@ -2,10 +2,8 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useReducedMotion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
 import { gsap } from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
-import { person } from "@/lib/person";
 
 if (typeof window !== "undefined") {
   gsap.registerPlugin(ScrollTrigger);
@@ -77,7 +75,7 @@ function TuxBaby({ id, variant, facing = "left" }: BabyConfig) {
           x="0"
           y="-65"
           textAnchor="middle"
-          fontFamily="var(--font-mono)"
+          fontFamily="var(--font-sans)"
           fontSize="14"
           fill="#FFFFFF"
           opacity="0"
@@ -87,8 +85,8 @@ function TuxBaby({ id, variant, facing = "left" }: BabyConfig) {
       )}
       {variant === "sleepy" && (
         <g id={`${id}-zzz`} opacity="0">
-          <text x="-2" y="-66" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="10" fill="#FFFFFF">z</text>
-          <text x="6" y="-72" textAnchor="middle" fontFamily="var(--font-mono)" fontSize="8" fill="#FFFFFF">z</text>
+          <text x="-2" y="-66" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="10" fill="#FFFFFF">z</text>
+          <text x="6" y="-72" textAnchor="middle" fontFamily="var(--font-sans)" fontSize="8" fill="#FFFFFF">z</text>
         </g>
       )}
     </g>
@@ -516,7 +514,7 @@ function Typewriter({ reduced }: { reduced: boolean }) {
     <div
       className="mt-8"
       style={{
-        fontFamily: "var(--font-mono)",
+        fontFamily: "var(--font-sans)",
         fontSize: 14,
         color: "#F5F0EB",
         lineHeight: 1.6,
@@ -555,7 +553,7 @@ export function EarthSection() {
           <div className="order-2">
             <span
               style={{
-                fontFamily: "var(--font-mono)",
+                fontFamily: "var(--font-sans)",
                 color: "#16A34A",
                 fontSize: 11,
               }}
@@ -566,7 +564,7 @@ export function EarthSection() {
 
             <h2
               style={{
-                fontFamily: "var(--font-serif)",
+                fontFamily: "var(--font-sans)",
                 color: "#F5F0EB",
               }}
               className="text-3xl md:text-4xl lg:text-5xl mt-3 leading-tight"
@@ -598,21 +596,6 @@ export function EarthSection() {
             >
               Tux is not just Linux&apos;s mascot.
             </p>
-
-            <a
-              href={person.social.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                fontFamily: "var(--font-mono)",
-                color: "#16A34A",
-                fontSize: 11,
-              }}
-              className="mt-6 inline-flex items-center gap-2 uppercase tracking-widest transition-opacity hover:opacity-80"
-            >
-              The code is open.
-              <ExternalLink size={12} />
-            </a>
           </div>
         </div>
       </div>
