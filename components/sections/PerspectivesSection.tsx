@@ -1,21 +1,18 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
-import { ChevronLeft, ChevronRight, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { opinions, type Opinion } from "@/lib/opinions";
 import { useAudio } from "@/components/providers/AudioProvider";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.06 } },
-};
+const CARD_WIDTH = 340;
+const CARD_GAP = 24; // must match the marginRight used for the seamless -50% loop
 
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
+const HEADING = "What I Think";
+const SUBTEXT =
+  "Opinions, signal pieces, systems philosophy, AI infrastructure worldview.";
 
 function OpinionCard({ opinion }: { opinion: Opinion }) {
   const { playSound } = useAudio();
@@ -24,7 +21,6 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
 
   return (
     <motion.div
-      variants={itemVariants}
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
@@ -41,7 +37,7 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
       <span
         aria-hidden
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "var(--color-brand)",
           opacity: 0.4,
           fontSize: 72,
@@ -57,7 +53,7 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
 
       <h3
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "#F5F0EB",
           fontSize: 16,
           lineHeight: 1.35,
@@ -82,7 +78,7 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
       <div className="mt-4 flex items-center justify-between gap-2 shrink-0 relative z-10">
         <span
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             borderColor: "var(--color-brand)",
             color: "var(--color-brand)",
           }}
@@ -109,161 +105,64 @@ function OpinionCard({ opinion }: { opinion: Opinion }) {
   );
 }
 
-function DraggableTrack({ children }: { children: React.ReactNode }) {
-  const wrapperRef = useRef<HTMLDivElement>(null);
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [constraint, setConstraint] = useState(0);
-  const [hinted, setHinted] = useState(true);
-
-  useEffect(() => {
-    const update = () => {
-      const wrap = wrapperRef.current;
-      const track = trackRef.current;
-      if (!wrap || !track) return;
-      const max = Math.max(0, track.scrollWidth - wrap.clientWidth);
-      setConstraint(max);
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  const onDragStart = () => setHinted(false);
-
-  return (
-    <div ref={wrapperRef} className="relative overflow-hidden">
-      <motion.div
-        ref={trackRef}
-        drag="x"
-        dragConstraints={{ left: -constraint, right: 0 }}
-        dragElastic={0.1}
-        dragMomentum
-        onDragStart={onDragStart}
-        className="flex gap-6 items-stretch will-change-transform"
-        style={{ touchAction: "pan-y", cursor: constraint > 0 ? "grab" : "default" }}
-        whileTap={{ cursor: "grabbing" }}
-      >
-        {children}
-      </motion.div>
-
-      {constraint > 0 && (
-        <>
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              left: 0,
-              width: 56,
-              pointerEvents: "none",
-              background:
-                "linear-gradient(to right, #1C1412 0%, rgba(28, 20, 18, 0) 100%)",
-              opacity: hinted ? 1 : 0,
-              transition: "opacity 600ms ease",
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: 0,
-              bottom: 0,
-              right: 0,
-              width: 56,
-              pointerEvents: "none",
-              background:
-                "linear-gradient(to left, #1C1412 0%, rgba(28, 20, 18, 0) 100%)",
-              opacity: hinted ? 1 : 0,
-              transition: "opacity 600ms ease",
-            }}
-          />
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: 12,
-              transform: "translateY(-50%)",
-              color: "var(--color-brand)",
-              opacity: hinted ? 0.7 : 0,
-              transition: "opacity 600ms ease",
-              pointerEvents: "none",
-            }}
-          >
-            <ChevronLeft size={20} />
-          </div>
-          <div
-            aria-hidden
-            style={{
-              position: "absolute",
-              top: "50%",
-              right: 12,
-              transform: "translateY(-50%)",
-              color: "var(--color-brand)",
-              opacity: hinted ? 0.7 : 0,
-              transition: "opacity 600ms ease",
-              pointerEvents: "none",
-            }}
-          >
-            <ChevronRight size={20} />
-          </div>
-        </>
-      )}
-    </div>
-  );
-}
-
 export function PerspectivesSection() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <section
       className="py-20"
-      // Intentional fixed dark background regardless of theme.
-      style={{ backgroundColor: "#1C1412" }}
+      // theme-adaptive background per product decision 2026-05-26
+      style={{ backgroundColor: "var(--color-surface-alt)" }}
     >
       <div className="container">
         <ScrollReveal variant="scramble">
           <h2
-            style={{ fontFamily: "var(--font-serif)", color: "var(--color-surface)" }}
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
             className="text-3xl md:text-4xl"
           >
-            What I think
+            {HEADING}
           </h2>
         </ScrollReveal>
         <p
-          style={{ fontFamily: "var(--font-sans)", color: "#A8A29E" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
           className="mt-3 text-base"
         >
-          Strong opinions, loosely held. Loudly published.
+          {SUBTEXT}
         </p>
 
-        <motion.div
-          variants={containerVariants}
-          initial={prefersReducedMotion ? "visible" : "hidden"}
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.05 }}
-          className="mt-10"
-        >
-          <div className="hidden lg:block">
-            <DraggableTrack>
+        <div className="mt-10">
+          {prefersReducedMotion ? (
+            // Reduced motion: a plain horizontal scroll container, single set, no
+            // animation.
+            <div className="flex gap-6 overflow-x-auto pb-2 snap-x">
               {opinions.map((o) => (
-                <div key={o.id} className="shrink-0" style={{ width: 340 }}>
+                <div
+                  key={o.id}
+                  className="shrink-0 snap-start"
+                  style={{ width: CARD_WIDTH }}
+                >
                   <OpinionCard opinion={o} />
                 </div>
               ))}
-            </DraggableTrack>
-          </div>
-
-          <div className="lg:hidden grid grid-cols-1 md:grid-cols-2 gap-6 items-stretch overflow-x-auto snap-x snap-mandatory">
-            {opinions.map((o) => (
-              <div key={o.id} className="snap-start">
-                <OpinionCard opinion={o} />
+            </div>
+          ) : (
+            // Auto-scroll carousel: cards rendered twice end-to-end so the
+            // translateX(-50%) loop is seamless. Pauses on hover (globals.css).
+            <div className="perspectives-carousel relative overflow-hidden">
+              <div className="perspectives-track flex">
+                {[...opinions, ...opinions].map((o, i) => (
+                  <div
+                    key={`${o.id}-${i}`}
+                    className="shrink-0"
+                    style={{ width: CARD_WIDTH, marginRight: CARD_GAP }}
+                  >
+                    <OpinionCard opinion={o} />
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </motion.div>
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );

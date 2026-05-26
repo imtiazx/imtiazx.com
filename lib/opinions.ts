@@ -61,4 +61,55 @@ export const opinions: Opinion[] = [
     publishedAt: "2025-01-01",
     tags: ["Engineering", "Craft", "Mindset"],
   },
+  // Placeholder perspectives -- realistic dummy takes to fill the carousel.
+  {
+    id: "evals-are-tests",
+    title: "Evals are the new unit tests. Skip them and you are shipping vibes.",
+    oneliner:
+      "If you cannot measure a regression, you cannot claim an improvement. Build the harness before the demo.",
+    platform: "Hashnode",
+    url: "#",
+    publishedAt: "2025-01-01",
+    tags: ["Evaluation", "Testing", "LLMOps"],
+  },
+  {
+    id: "agents-are-retries",
+    title: "Most 'agents' are just retries with extra steps and a bigger bill.",
+    oneliner:
+      "Autonomy is not a feature you bolt on. Earn it with tight tools, hard stops, and ruthless evals.",
+    platform: "X",
+    url: "#",
+    publishedAt: "2025-01-01",
+    tags: ["Agents", "Architecture", "Cost"],
+  },
+  {
+    id: "rag-not-dead",
+    title: "RAG is not dead. Your chunking strategy is.",
+    oneliner:
+      "Bigger context windows do not absolve lazy retrieval. Garbage in, confidently wrong out.",
+    platform: "Blog",
+    url: "#",
+    publishedAt: "2025-01-01",
+    tags: ["RAG", "Retrieval", "Context"],
+  },
+  {
+    id: "finetuning-tax",
+    title: "Fine-tuning is the tax you pay when your prompt and retrieval are lazy.",
+    oneliner:
+      "Exhaust prompting and context engineering first. Most teams reach for weights when they should reach for data.",
+    platform: "X",
+    url: "#",
+    publishedAt: "2025-01-01",
+    tags: ["Fine-tuning", "Prompting", "Pragmatism"],
+  },
+  {
+    id: "latency-is-a-feature",
+    title: "Latency is a feature. Nobody waits ten seconds to feel the magic.",
+    oneliner:
+      "Streaming, caching, and smaller models beat a marginally smarter answer that arrives too late to matter.",
+    platform: "Hashnode",
+    url: "#",
+    publishedAt: "2025-01-01",
+    tags: ["Latency", "UX", "Inference"],
+  },
 ];
