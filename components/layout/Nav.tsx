@@ -7,7 +7,7 @@ import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 import { useAudio, type AudioState } from "@/components/providers/AudioProvider";
 import { person } from "@/lib/person";
 
-const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
+const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
 
 const NAV_LINKS = [
   { label: "Lab",    href: "/lab"    },
@@ -49,7 +49,11 @@ export function Nav() {
     document.getElementById("earth")?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const isHome = pathname === "/";
+  const isHome = pathname === "/home";
+
+  // The intro gateway ("/") is an immersive full-screen scene; the nav would
+  // overlap the symbol sphere, so it stays hidden there.
+  if (pathname === "/") return null;
 
   return (
     <nav
@@ -58,11 +62,11 @@ export function Nav() {
         borderBottomColor: "var(--color-border)",
       }}
     >
-      <div className="container flex h-14 items-center justify-between">
+      <div className="flex h-14 w-full items-center justify-between px-6 md:px-8">
         <Link
-          href="/"
+          href="/home"
           className="text-sm font-medium tracking-tight"
-          style={{ fontFamily: "var(--font-mono)" }}
+          style={{ fontFamily: "var(--font-sans)" }}
         >
           <span style={{ color: "var(--color-text-primary)" }}>{person.handle.slice(0, -1)}</span>
           <span style={{ color: "var(--color-brand)" }}>{person.handle.slice(-1)}</span>
