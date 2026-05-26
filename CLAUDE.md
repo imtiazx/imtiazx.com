@@ -50,18 +50,20 @@ Primary brand: --color-brand (#EA580C in light, #FB923C in dark)
 Use --color-brand everywhere purple was used previously.
 Never use hardcoded hex values except in:
 - EarthSection.tsx background (#0C1A0E) -- intentional fixed dark
-- PerspectivesSection.tsx background (#1C1412) -- intentional fixed dark
-These two are documented with comments in those files.
+- PerspectivesSection.tsx perspective card surfaces (fixed dark, matches Signal page)
+These are documented with comments in those files.
+PerspectivesSection.tsx section background is now theme-adaptive
+(--color-surface-alt), reversed from fixed dark by product decision 2026-05-26.
 
 ---
 
 ## Three-theme system
 
-Themes: light (default), dark, system
+Themes: light, dark, system (default)
 Implementation: .dark class on html element
 Persistence: localStorage key "theme"
-First visit with no stored preference: use "light" (not system)
-Toggle in nav cycles: light > dark > system > light
+Theme default: system on first visit
+Toggle cycles: system > light > dark > system
 
 ---
 
@@ -100,11 +102,11 @@ Total duration: ~6.8 seconds. Reduced-motion: 650ms.
 ## Homepage section order
 
 1. Hero (no metrics bar)
-2. ProjectsSection
-3. HackathonsSection
-4. IdentitySection
-5. PerspectivesSection
-6. WritingSection
+2. ProjectsSection ("What I Build")
+3. HackathonsSection ("What I Compete In")
+4. IdentitySection ("What I Bring")
+5. WritingSection ("What I Write")
+6. PerspectivesSection ("What I Think")
 7. EarthSection (id="earth")
 8. FooterCTA
 
@@ -225,10 +227,12 @@ imtiazx.ai/
   Grapheme-aware via Intl.Segmenter.
 - ScrollReveal TDZ fix: IntersectionObserver created outside gsap.context().
   Cleanup in useEffect return calls io.disconnect() and ctx.revert() separately.
-- Theme default: "light" on first visit, never "system" by default.
+- Theme default: "system" on first visit. Toggle cycles system > light > dark > system.
 - Audio click: Web Audio API singleton (AudioContext ref, lazy init).
-- Earth + Perspectives sections: hardcoded dark backgrounds regardless of theme.
-  This is intentional and documented with comments in those files.
+- Earth section: hardcoded dark background regardless of theme (intentional,
+  documented in the file). Perspectives section background is theme-adaptive
+  (--color-surface-alt) as of 2026-05-26; its perspective cards keep fixed dark
+  surfaces (matches Signal page).
 
 ---
 
