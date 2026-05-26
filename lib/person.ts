@@ -13,6 +13,7 @@ export interface Social {
   hashnode: string;
   linkedin: string;
   email: string;
+  twitterUrl: string;
 }
 
 export interface Person {
@@ -23,6 +24,7 @@ export interface Person {
   bio: string;
   metrics: Metric[];
   identityCards: IdentityCard[];
+  philosophy: string[];
   social: Social;
 }
 
@@ -64,10 +66,18 @@ export const person: Person = {
       description: "Deep-dive articles, open-source docs, public learning",
     },
   ],
+  philosophy: [
+    "Statistics informs. Data science decides. AI executes.",
+    "Responsible AI is not a checkbox. It is an architecture decision.",
+    "GenAI systems fail at the edges. Engineer the edges.",
+    "Forward deployed means you own the outcome, not just the model.",
+    "Production is where research becomes real.",
+  ],
   social: {
     github: "https://github.com/imtiazx",
     hashnode: "https://blog.imtiaz.dev",
     linkedin: "https://www.linkedin.com/in/imtiazx",
     email: "imtiaz0x1@gmail.com",
+    twitterUrl: "https://x.com/Web3Gen0",
   },
 };
