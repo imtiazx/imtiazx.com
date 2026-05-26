@@ -295,7 +295,7 @@ function TimelineCard({ entry, alignRight }: { entry: TimelineEntry; alignRight?
   return (
     <div className={alignRight ? "md:items-end" : ""}>
       <div
-        style={{ fontFamily: "var(--font-mono)", color: "var(--color-brand)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)" }}
         className="text-[11px] uppercase tracking-widest"
       >
         {entry.date}
@@ -321,7 +321,7 @@ function TimelineSection() {
     <section className="mt-24">
       <ScrollReveal variant="fadeUp">
         <h2
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-3xl md:text-4xl mb-12"
         >
           Timeline
@@ -395,7 +395,7 @@ function StatusChip({ status }: { status: FocusStatus }) {
           style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--color-green)" }}
         />
         <span
-          style={{ fontFamily: "var(--font-mono)", color: "var(--color-green)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-green)" }}
           className="text-[10px] uppercase tracking-wider"
         >
           LIVE
@@ -436,13 +436,13 @@ function FocusCardItem({ card }: { card: FocusCard }) {
       className="flex flex-col h-full p-6 border transition-[border-color,box-shadow] duration-200"
     >
       <div
-        style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
         className="text-[11px] uppercase tracking-widest shrink-0"
       >
         {card.label}
       </div>
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="mt-2 text-xl md:text-2xl leading-snug shrink-0"
       >
         {card.title}
@@ -465,7 +465,7 @@ function RightNowSection() {
     <section className="mt-24">
       <ScrollReveal variant="fadeUp">
         <h2
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-3xl md:text-4xl mb-8"
         >
           Right now
@@ -490,7 +490,7 @@ export default function AboutPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           About

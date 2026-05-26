@@ -10,6 +10,7 @@
   /* Background and surface */
   --color-bg: #FAFAF9;
   --color-surface: #FFFFFF;
+  --color-surface-alt: hsl(0 0% 96%); /* subtle section background */
   --color-border: #E7E5E4;
 
   /* Text */
@@ -64,6 +65,7 @@
 .dark {
   --color-bg: #0C0A09;
   --color-surface: #1C1917;
+  --color-surface-alt: hsl(0 0% 8%); /* subtle section background */
   --color-border: #292524;
   --color-text-primary: #FAFAF9;
   --color-text-secondary: #D6D3D1;
@@ -208,6 +210,32 @@ body {
   animation: livePulse 1.6s ease-out infinite;
 }
 
+/* ProjectCard: status badge glow on card hover. Glow color is the badge's own
+   text color (currentColor). The global reduced-motion reset above neutralizes
+   this automatically. */
+@keyframes statusGlow {
+  from { box-shadow: 0 0 0px transparent; }
+  to   { box-shadow: 0 0 8px 2px currentColor; }
+}
+
+/* PerspectivesSection: continuous right-to-left auto-scroll carousel. The track
+   renders the cards twice end-to-end; translateX(-50%) advances exactly one copy
+   for a seamless loop. width:max-content makes -50% resolve against the content
+   width (not the parent). Duration is tuned to ~40px/s for the 10-card set; the
+   reduced-motion branch in the component renders a plain scroller instead. */
+@keyframes scrollLeft {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+.perspectives-track {
+  width: max-content;
+  animation: scrollLeft 90s linear infinite;
+  will-change: transform;
+}
+.perspectives-carousel:hover .perspectives-track {
+  animation-play-state: paused;
+}
+
 /* Earth: typewriter cursor blink */
 @keyframes cursorBlink {
   0%, 50%   { opacity: 1; }
@@ -281,7 +309,7 @@ body {
 .prog-word {
   position: relative;
   display: inline-block;
-  cursor: default;
+  cursor: none;
   transition: text-shadow 250ms ease, transform 250ms ease;
 }
 .prog-word::after {
@@ -307,6 +335,10 @@ body {
     transition: none;
   }
 }
+
+/* Hide the native OS cursor; CustomCursor renders the orange laser pointer
+   instead. The coarse-pointer override below restores it on touch devices. */
+body { cursor: none; }
 
 /* Hide custom cursor entirely on touch / coarse-pointer devices */
 @media (pointer: coarse) {
