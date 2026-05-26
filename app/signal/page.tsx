@@ -142,7 +142,7 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
       <span
         aria-hidden
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "var(--color-brand)",
           opacity: 0.4,
           fontSize: 72,
@@ -158,7 +158,7 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
 
       <h3
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "#F5F0EB",
           fontSize: 18,
           lineHeight: 1.35,
@@ -185,7 +185,7 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
           <span
             key={tag}
             style={{
-              fontFamily: "var(--font-mono)",
+              fontFamily: "var(--font-sans)",
               color: "#A8A29E",
               borderColor: "#3D2E28",
             }}
@@ -202,7 +202,7 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
       >
         <span
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             borderColor: "var(--color-brand)",
             color: "var(--color-brand)",
           }}
@@ -220,12 +220,12 @@ function OpinionFullCard({ opinion }: { opinion: Opinion }) {
             style={{ color: "#A8A29E", fontFamily: "var(--font-sans)" }}
             className="inline-flex items-center gap-1.5 text-[12px] transition-colors duration-150 hover:text-[var(--color-brand)]"
           >
-            Read on {opinion.platform}
+            {opinion.platform}
             <ExternalLink size={13} />
           </a>
         ) : (
           <span
-            style={{ color: "#6B5E57", fontFamily: "var(--font-mono)" }}
+            style={{ color: "#6B5E57", fontFamily: "var(--font-sans)" }}
             className="text-[10px] uppercase tracking-wider"
           >
             Unpublished
@@ -254,7 +254,7 @@ export default function SignalPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           Signal

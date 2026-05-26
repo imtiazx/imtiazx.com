@@ -32,23 +32,24 @@ export function PostCard({ post }: PostCardProps) {
         backgroundColor: hovered ? "var(--color-surface)" : "transparent",
         borderColor: "var(--color-border)",
       }}
-      className="flex flex-col h-full p-5 rounded-xl border transition-colors duration-200"
+      className="group flex flex-col h-full p-5 rounded-xl border transition-colors duration-200"
     >
-      {/* Category chip */}
+      {/* Category chip -- glows in brand orange on card hover (statusGlow uses
+          currentColor, which is --color-brand here). */}
       <span
         style={{
-          fontFamily: "var(--font-mono)",
+          fontFamily: "var(--font-sans)",
           color: "var(--color-brand)",
           backgroundColor: "var(--color-brand-light)",
         }}
-        className="self-start inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium mb-3 shrink-0"
+        className="self-start inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider font-medium mb-3 shrink-0 group-hover:animate-[statusGlow_1.2s_ease-in-out_infinite_alternate]"
       >
         {categoryLabel[post.category]}
       </span>
 
       {/* Title */}
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="text-xl leading-snug mb-3 shrink-0"
       >
         {post.title}
@@ -76,7 +77,7 @@ export function PostCard({ post }: PostCardProps) {
           style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)" }}
           className="text-[12px] font-medium"
         >
-          Read on Hashnode
+          Hashnode
         </span>
         <span
           style={{
