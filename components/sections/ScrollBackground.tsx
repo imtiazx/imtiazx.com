@@ -85,9 +85,26 @@ export function ScrollBackground() {
   const [zone,          setZone]          = useState(0);
   const [active,        setActive]        = useState(false);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const [isDark,        setIsDark]        = useState(false);
   const [symPos,        setSymPos]        = useState<SymPos[]>(() =>
     MATH_SYMBOLS.map((s) => ({ x: s.x, y: s.y, popped: false }))
   );
+
+  // Track the resolved theme (the .dark class on <html>) so the dot grid can be
+  // tuned per theme. Light mode gets a denser, more saturated brand-orange grid
+  // because the previous near-neutral dots were nearly invisible on the warm
+  // background; dark mode is left untouched.
+  useEffect(() => {
+    const compute = () =>
+      setIsDark(document.documentElement.classList.contains("dark"));
+    compute();
+    const obs = new MutationObserver(compute);
+    obs.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+    return () => obs.disconnect();
+  }, []);
 
   useEffect(() => {
     const rm = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -238,21 +255,38 @@ export function ScrollBackground() {
           aria-hidden
         >
           <defs>
+            {/* Light mode: ~40% denser grid (tile 30 vs 36 -> 1.44x the dots)
+                in brand orange at 0.35 so the dots actually read on the warm
+                background. Dark mode keeps its original tile and faint fills. */}
             <pattern
               id="sb-small-dots"
-              x="0" y="0" width="36" height="36"
+              x="0" y="0"
+              width={isDark ? 36 : 30} height={isDark ? 36 : 30}
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="18" cy="18" r="0.75"
-                fill="rgba(234, 88, 12, 0.05)" />
+              <circle
+                cx={isDark ? 18 : 15} cy={isDark ? 18 : 15} r="0.75"
+                style={
+                  isDark
+                    ? { fill: "rgba(234, 88, 12, 0.05)" }
+                    : { fill: "var(--color-brand)", fillOpacity: 0.35 }
+                }
+              />
             </pattern>
             <pattern
               id="sb-large-dots"
-              x="0" y="0" width="216" height="216"
+              x="0" y="0"
+              width={isDark ? 216 : 180} height={isDark ? 216 : 180}
               patternUnits="userSpaceOnUse"
             >
-              <circle cx="18" cy="18" r="1.25"
-                fill="rgba(234, 88, 12, 0.09)" />
+              <circle
+                cx={isDark ? 18 : 15} cy={isDark ? 18 : 15} r="1.25"
+                style={
+                  isDark
+                    ? { fill: "rgba(234, 88, 12, 0.09)" }
+                    : { fill: "var(--color-brand)", fillOpacity: 0.35 }
+                }
+              />
             </pattern>
           </defs>
           <rect width="100%" height="100%" fill="url(#sb-small-dots)" />
