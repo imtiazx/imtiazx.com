@@ -18,6 +18,10 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+const HEADING = "What I Compete In";
+const SUBTEXT =
+  "Kaggle, hackathons, rankings, research competitions, external validation.";
+
 function pickMostRecent(list: Hackathon[]): Hackathon | undefined {
   if (list.length === 0) return undefined;
   return [...list].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))[0];
@@ -27,7 +31,7 @@ function PlatformChip({ label }: { label: string }) {
   return (
     <span
       style={{
-        fontFamily: "var(--font-mono)",
+        fontFamily: "var(--font-sans)",
         borderColor: "var(--color-brand)",
         color: "var(--color-brand)",
       }}
@@ -41,24 +45,22 @@ function PlatformChip({ label }: { label: string }) {
 function GhostExternalLink({
   href,
   label,
-  disabled,
   onActivate,
 }: {
-  href: string;
+  href: string | null;
   label: string;
-  disabled?: boolean;
   onActivate?: () => void;
 }) {
-  if (disabled) {
+  // No competition page yet -> greyed, non-interactive placeholder.
+  if (!href) {
     return (
       <span
         style={{
           fontFamily: "var(--font-sans)",
           color: "var(--color-text-muted)",
           borderColor: "var(--color-border)",
-          opacity: 0.5,
         }}
-        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] cursor-not-allowed"
+        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] opacity-40 cursor-not-allowed pointer-events-none"
         aria-disabled
       >
         <ExternalLink size={13} />
@@ -106,7 +108,7 @@ function CardShell({
         boxShadow: hovered ? "0 8px 24px var(--color-brand-light)" : "none",
         borderRadius: 12,
       }}
-      className="flex flex-col h-full p-6 border transition-[border-color,box-shadow] duration-200"
+      className="group flex flex-col h-full p-6 border transition-[border-color,box-shadow] duration-200"
     >
       {children}
     </motion.div>
@@ -131,17 +133,17 @@ function ActiveCard({ h }: { h: Hackathon }) {
         />
         <span
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             color: "var(--color-green)",
           }}
-          className="text-[10px] uppercase tracking-wider"
+          className="text-[10px] uppercase tracking-wider group-hover:animate-[statusGlow_1.2s_ease-in-out_infinite_alternate]"
         >
           LIVE
         </span>
       </div>
 
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="text-2xl md:text-3xl leading-snug mb-3 shrink-0"
       >
         {h.name}
@@ -170,7 +172,7 @@ function ActiveCard({ h }: { h: Hackathon }) {
       <div className="my-4 shrink-0">
         <div
           style={{
-            fontFamily: "var(--font-serif)",
+            fontFamily: "var(--font-sans)",
             color: "var(--color-brand)",
             fontSize: 48,
             lineHeight: 1,
@@ -180,7 +182,7 @@ function ActiveCard({ h }: { h: Hackathon }) {
         </div>
         <div
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             color: "var(--color-text-muted)",
             fontSize: 11,
           }}
@@ -199,7 +201,6 @@ function ActiveCard({ h }: { h: Hackathon }) {
         <GhostExternalLink
           href={h.competitionUrl}
           label="View competition"
-          disabled={h.competitionUrl === "#"}
           onActivate={() => playSound("click")}
         />
       </div>
@@ -215,18 +216,18 @@ function CompletedCard({ h }: { h: Hackathon }) {
       <div className="mb-4 shrink-0">
         <span
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             color: "var(--color-amber)",
             backgroundColor: "var(--color-amber-light)",
           }}
-          className="inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider"
+          className="inline-block px-2 py-0.5 rounded text-[10px] uppercase tracking-wider group-hover:animate-[statusGlow_1.2s_ease-in-out_infinite_alternate]"
         >
           COMPLETED
         </span>
       </div>
 
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="text-2xl leading-snug mb-3 shrink-0"
       >
         {h.name}
@@ -235,7 +236,7 @@ function CompletedCard({ h }: { h: Hackathon }) {
       {h.placement && (
         <div
           style={{
-            fontFamily: "var(--font-serif)",
+            fontFamily: "var(--font-sans)",
             color: "var(--color-brand)",
           }}
           className="text-3xl md:text-4xl leading-tight mb-3 shrink-0"
@@ -267,8 +268,7 @@ function CompletedCard({ h }: { h: Hackathon }) {
       >
         <GhostExternalLink
           href={h.competitionUrl}
-          label="View result"
-          disabled={h.competitionUrl === "#"}
+          label="View competition"
           onActivate={() => playSound("click")}
         />
       </div>
@@ -286,21 +286,21 @@ export function HackathonsSection() {
   return (
     <section className="py-20 lg:py-28">
       <div className="container">
-        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-12 gap-3">
+        <div className="mb-12">
           <ScrollReveal variant="scramble">
             <h2
-              style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
               className="text-3xl md:text-4xl"
             >
-              What I compete in
+              {HEADING}
             </h2>
           </ScrollReveal>
-          <span
-            style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
-            className="text-xs uppercase tracking-wider"
+          <p
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+            className="mt-3 text-base md:text-lg max-w-2xl"
           >
-            Rankings update weekly
-          </span>
+            {SUBTEXT}
+          </p>
         </div>
 
         <motion.div

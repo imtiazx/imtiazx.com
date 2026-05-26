@@ -11,7 +11,9 @@ export interface Hackathon {
   placement?: string;
   description: string;
   updatedAt: string;
-  competitionUrl: string;
+  // Link to the competition page only (never a result/ranking URL). null when
+  // there is no public page yet -- the card renders a greyed placeholder.
+  competitionUrl: string | null;
   tags: string[];
 }
 
@@ -40,7 +42,7 @@ export const hackathons: Hackathon[] = [
     description:
       "Built a multi-agent orchestration system for dynamic task decomposition. Placed 3rd globally.",
     updatedAt: "2024-06-01",
-    competitionUrl: "#",
+    competitionUrl: null,
     tags: ["LangFlow", "Multi-agent", "Orchestration", "Python"],
   },
 ];

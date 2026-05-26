@@ -77,7 +77,6 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
   const isActive = h.status === "Active";
-  const disabled = h.competitionUrl === "#";
 
   return (
     <motion.article
@@ -102,7 +101,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
               style={{ width: 8, height: 8, borderRadius: "50%", backgroundColor: "var(--color-green)" }}
             />
             <span
-              style={{ fontFamily: "var(--font-mono)", color: "var(--color-green)" }}
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-green)" }}
               className="text-[10px] uppercase tracking-wider"
             >
               LIVE
@@ -111,7 +110,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
         ) : (
           <span
             style={{
-              fontFamily: "var(--font-mono)",
+              fontFamily: "var(--font-sans)",
               color: "var(--color-amber)",
               backgroundColor: "var(--color-amber-light)",
             }}
@@ -122,7 +121,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
         )}
         <span
           style={{
-            fontFamily: "var(--font-mono)",
+            fontFamily: "var(--font-sans)",
             borderColor: "var(--color-brand)",
             color: "var(--color-brand)",
           }}
@@ -131,7 +130,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
           {h.platform}
         </span>
         <span
-          style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
           className="text-[11px] uppercase tracking-wider"
         >
           Updated {h.updatedAt}
@@ -139,7 +138,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
       </div>
 
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="text-2xl md:text-3xl leading-snug mb-4"
       >
         {h.name}
@@ -148,12 +147,12 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
       {isActive && typeof h.rank === "number" && (
         <div className="mb-4">
           <div
-            style={{ fontFamily: "var(--font-serif)", color: "var(--color-brand)", fontSize: 48, lineHeight: 1 }}
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)", fontSize: 48, lineHeight: 1 }}
           >
             #{h.rank}
           </div>
           <div
-            style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)", fontSize: 11 }}
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)", fontSize: 11 }}
             className="mt-1 uppercase tracking-wider"
           >
             Public leaderboard rank
@@ -163,7 +162,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
 
       {!isActive && h.placement && (
         <div
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-brand)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)" }}
           className="text-3xl md:text-4xl leading-tight mb-4"
         >
           {h.placement}
@@ -189,21 +188,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
         className="pt-4 mt-auto"
         style={{ borderTop: "1px solid var(--color-border)" }}
       >
-        {disabled ? (
-          <span
-            style={{
-              fontFamily: "var(--font-sans)",
-              color: "var(--color-text-muted)",
-              borderColor: "var(--color-border)",
-              opacity: 0.5,
-            }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] cursor-not-allowed"
-            aria-disabled
-          >
-            <ExternalLink size={13} />
-            {isActive ? "View competition" : "View result"}
-          </span>
-        ) : (
+        {h.competitionUrl ? (
           <a
             href={h.competitionUrl}
             target="_blank"
@@ -217,8 +202,21 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] bg-transparent transition-colors duration-150 hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
           >
             <ExternalLink size={13} />
-            {isActive ? "View competition" : "View result"}
+            View competition
           </a>
+        ) : (
+          <span
+            style={{
+              fontFamily: "var(--font-sans)",
+              color: "var(--color-text-muted)",
+              borderColor: "var(--color-border)",
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] opacity-40 cursor-not-allowed pointer-events-none"
+            aria-disabled
+          >
+            <ExternalLink size={13} />
+            View competition
+          </span>
         )}
       </div>
     </motion.article>
@@ -273,7 +271,7 @@ function HackathonsTab() {
       {active.length > 0 && (
         <section>
           <h2
-            style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
             className="text-xs uppercase tracking-widest mb-5"
           >
             Active
@@ -289,7 +287,7 @@ function HackathonsTab() {
       {completed.length > 0 && (
         <section>
           <h2
-            style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
             className="text-xs uppercase tracking-widest mb-5"
           >
             Completed
@@ -325,7 +323,7 @@ function OpenSourceTab() {
         <Code2 size={28} />
       </div>
       <h3
-        style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
         className="text-2xl md:text-3xl mb-3"
       >
         Coming soon
@@ -344,7 +342,7 @@ function OpenSourceTab() {
           style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "var(--color-brand)" }}
         />
         <span
-          style={{ fontFamily: "var(--font-mono)", color: "var(--color-text-muted)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
           className="text-[10px] uppercase tracking-widest"
         >
           Open sourcing in progress
@@ -362,7 +360,7 @@ export default function LabPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           Lab
