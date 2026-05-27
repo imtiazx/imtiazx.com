@@ -52,7 +52,7 @@ export default function NotFound() {
       <span
         aria-hidden
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "var(--color-brand)",
           opacity: 0.15,
           fontSize: "8rem",
@@ -77,7 +77,7 @@ export default function NotFound() {
         <ScrollReveal variant="fadeUp" delay={0.05}>
           <h1
             style={{
-              fontFamily: "var(--font-serif)",
+              fontFamily: "var(--font-sans)",
               color: "var(--color-text-primary)",
               fontSize: "2rem",
               lineHeight: 1.15,

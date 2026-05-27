@@ -14,6 +14,7 @@ export interface Social {
   linkedin: string;
   email: string;
   twitterUrl: string;
+  kaggleUrl: string;
 }
 
 export interface Person {
@@ -79,5 +80,6 @@ export const person: Person = {
     linkedin: "https://www.linkedin.com/in/imtiazx",
     email: "imtiaz0x1@gmail.com",
     twitterUrl: "https://x.com/Web3Gen0",
+    kaggleUrl: "https://www.kaggle.com/ximtiazx",
   },
 };

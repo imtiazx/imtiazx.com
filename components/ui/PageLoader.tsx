@@ -1,20 +1,27 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useAudio } from "@/components/providers/AudioProvider";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
+import { playUnlock } from "@/lib/sound";
 
 const NAME = "imtiaz";
 const TYPE_BASE_MS = 70;
 const TYPE_JITTER_MS = 50;
 const START_DELAY_MS = 300;
-const X_DELAY_MS = 120;
-const REDUCED_AUTO_DISMISS_MS = 1500;
-const DISMISS_UNMOUNT_MS = 950;
+const X_DELAY_MS = 80;
+// Hold the finished "imtiazx" only briefly, then dismiss on its own. Kept short
+// so the handoff to the page underneath feels instant, not laggy.
+const AUTO_DISMISS_HOLD_MS = 80;
+const REDUCED_AUTO_DISMISS_MS = 80;
+// Unmount right as the 200ms fade completes, so the transparent overlay does not
+// linger over (or keep capturing clicks on) the already-revealed page.
+const DISMISS_UNMOUNT_MS = 200;
 const SAFETY_AUTO_DISMISS_MS = 12000;
 
-const THEME_CYCLE: Theme[] = ["light", "dark", "system"];
+const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
 
 interface Ripple {
   id: number;
@@ -33,6 +40,12 @@ export function PageLoader() {
   const { theme, setTheme } = useTheme();
   const { audioState } = useAudio();
 
+  // When the document first loads on the intro gateway ("/"), that scene owns
+  // the reveal, so the standalone loader stays out of the way for the whole
+  // session. Direct hard-loads of other routes still get the loader.
+  const pathname = usePathname();
+  const skipRef = useRef(pathname === "/");
+
   const [visible, setVisible] = useState(true);
   const [exiting, setExiting] = useState(false);
   const [typedCount, setTypedCount] = useState(0);
@@ -42,29 +55,17 @@ export function PageLoader() {
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
   const audioStateRef = useRef(audioState);
-  const audioCtxRef = useRef<AudioContext | null>(null);
   const reducedRef = useRef(false);
   const dismissedRef = useRef(false);
   const rippleIdRef = useRef(0);
+  // The loader returns null when dismissed but never unmounts (it lives in the
+  // layout), so the effect cleanup that restores scroll never fires. We restore
+  // it explicitly in beginDismiss, reading the value saved by the lock effect.
+  const previousOverflowRef = useRef("");
 
   useEffect(() => {
     audioStateRef.current = audioState;
   }, [audioState]);
-
-  const ensureAudio = useCallback((): AudioContext | null => {
-    if (audioCtxRef.current) return audioCtxRef.current;
-    if (typeof window === "undefined") return null;
-    try {
-      const Ctor: typeof AudioContext | undefined =
-        window.AudioContext ||
-        (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-      if (!Ctor) return null;
-      audioCtxRef.current = new Ctor();
-      return audioCtxRef.current;
-    } catch {
-      return null;
-    }
-  }, []);
 
   const canPlayAudio = useCallback((): boolean => {
     if (reducedRef.current) return false;
@@ -72,52 +73,19 @@ export function PageLoader() {
     return true;
   }, []);
 
+  // The same soft unlock chime used by the intro gateway.
   const playClickSound = useCallback(() => {
     if (!canPlayAudio()) return;
-    const ctx = ensureAudio();
-    if (!ctx) return;
-    if (ctx.state === "suspended") ctx.resume().catch(() => {});
-    try {
-      const now = ctx.currentTime;
-
-      // Layer 1: noise transient. White noise shaped with exponential decay
-      // (time constant 0.007s), gain 0.28, duration 25ms.
-      const bufSize = Math.max(1, Math.floor(ctx.sampleRate * 0.025));
-      const noiseBuf = ctx.createBuffer(1, bufSize, ctx.sampleRate);
-      const data = noiseBuf.getChannelData(0);
-      for (let i = 0; i < bufSize; i++) {
-        const tt = i / ctx.sampleRate;
-        data[i] = (Math.random() * 2 - 1) * Math.exp(-tt / 0.007);
-      }
-      const noiseSrc = ctx.createBufferSource();
-      noiseSrc.buffer = noiseBuf;
-      const noiseGain = ctx.createGain();
-      noiseGain.gain.setValueAtTime(0.28, now);
-      noiseSrc.connect(noiseGain);
-      noiseGain.connect(ctx.destination);
-      noiseSrc.start(now);
-      noiseSrc.stop(now + 0.03);
-
-      // Layer 2: tonal body. Sine 1400Hz, peak 0.15, exp decay to 0.001 at +0.10s.
-      const osc = ctx.createOscillator();
-      osc.type = "sine";
-      osc.frequency.setValueAtTime(1400, now);
-      const oscGain = ctx.createGain();
-      oscGain.gain.setValueAtTime(0.15, now);
-      oscGain.gain.exponentialRampToValueAtTime(0.001, now + 0.10);
-      osc.connect(oscGain);
-      oscGain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.11);
-    } catch {
-      // ignore
-    }
-  }, [canPlayAudio, ensureAudio]);
+    playUnlock();
+  }, [canPlayAudio]);
 
   const beginDismiss = useCallback(() => {
     if (dismissedRef.current) return;
     dismissedRef.current = true;
     setExiting(true);
+    // Release the scroll lock immediately; the overlay is fixed-position so it
+    // can fade out over freed content without any jump.
+    document.body.style.overflow = previousOverflowRef.current;
     window.setTimeout(() => {
       setVisible(false);
     }, DISMISS_UNMOUNT_MS);
@@ -125,13 +93,14 @@ export function PageLoader() {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (skipRef.current) return;
     reducedRef.current = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-    const previousOverflow = document.body.style.overflow;
+    previousOverflowRef.current = document.body.style.overflow;
     document.body.style.overflow = "hidden";
 
     const restoreOverflow = () => {
-      document.body.style.overflow = previousOverflow;
+      document.body.style.overflow = previousOverflowRef.current;
     };
 
     const timeouts: ReturnType<typeof setTimeout>[] = [];
@@ -166,6 +135,9 @@ export function PageLoader() {
               if (dismissedRef.current) return;
               setShowX(true);
               setShowCursor(true);
+              // Reveal complete: hold briefly, then dismiss so scroll unlocks
+              // without waiting on a click or the safety timeout.
+              timeouts.push(setTimeout(beginDismiss, AUTO_DISMISS_HOLD_MS));
             }, X_DELAY_MS),
           );
         }
@@ -205,7 +177,7 @@ export function PageLoader() {
     setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
   };
 
-  if (!visible) return null;
+  if (skipRef.current || !visible) return null;
 
   return (
     <div
@@ -227,7 +199,7 @@ export function PageLoader() {
           position: "absolute",
           inset: 0,
           opacity: exiting ? 0 : 1,
-          transition: "opacity 600ms ease 300ms",
+          transition: "opacity 200ms ease",
         }}
       >
         <div
@@ -321,7 +293,7 @@ export function PageLoader() {
           cursor: "pointer",
           zIndex: 10001,
           opacity: exiting ? 0 : 1,
-          transition: "opacity 300ms ease, background-color 200ms ease",
+          transition: "opacity 200ms ease, background-color 200ms ease",
         }}
       >
         <ThemeIcon theme={theme} />

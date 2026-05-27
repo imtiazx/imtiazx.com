@@ -132,7 +132,7 @@ export function MetricsBar() {
                 ref={(el) => {
                   valueRefs.current[i] = el;
                 }}
-                style={{ fontFamily: "var(--font-serif)", color: "var(--color-brand)" }}
+                style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)" }}
                 className="text-4xl md:text-5xl tabular-nums"
               >
                 {metric.value}

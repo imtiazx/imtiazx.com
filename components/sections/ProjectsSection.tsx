@@ -17,20 +17,32 @@ const itemVariants = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
 };
 
+const HEADING = "What I Build";
+const SUBTEXT =
+  "Core projects, production systems, deployed AI infrastructure, flagship engineering work.";
+
 export function ProjectsSection() {
   const prefersReducedMotion = useReducedMotion();
 
   return (
     <section className="py-20 lg:py-28">
       <div className="container">
-        <ScrollReveal variant="scramble" className="mb-12">
-          <h2
-            style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
-            className="text-3xl md:text-4xl"
+        <div className="mb-12">
+          <ScrollReveal variant="scramble">
+            <h2
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+              className="text-3xl md:text-4xl"
+            >
+              {HEADING}
+            </h2>
+          </ScrollReveal>
+          <p
+            style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+            className="mt-3 text-base md:text-lg max-w-2xl"
           >
-            What I build
-          </h2>
-        </ScrollReveal>
+            {SUBTEXT}
+          </p>
+        </div>
 
         <motion.div
           variants={containerVariants}

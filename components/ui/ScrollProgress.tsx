@@ -22,7 +22,7 @@ export function ScrollProgress() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  if (pathname !== "/") return null;
+  if (pathname !== "/home") return null;
 
   return (
     <motion.div

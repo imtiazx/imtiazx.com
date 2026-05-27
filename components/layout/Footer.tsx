@@ -1,71 +1,32 @@
-import Link from "next/link";
-import { Globe, Hash, ExternalLink } from "lucide-react";
 import { person } from "@/lib/person";
+import { BrandIcon, type BrandName } from "@/components/ui/BrandIcon";
+
+const SOCIALS: { name: BrandName; label: string; href: string }[] = [
+  { name: "github", label: "GitHub", href: person.social.github },
+  { name: "linkedin", label: "LinkedIn", href: person.social.linkedin },
+  { name: "kaggle", label: "Kaggle", href: person.social.kaggleUrl },
+  { name: "twitter", label: "Twitter", href: person.social.twitterUrl },
+];
 
 export function Footer() {
-  const year = new Date().getFullYear();
-
   return (
     <footer
-      className="w-full border-t"
+      className="w-full flex items-center justify-end gap-4 pr-6 py-4 border-t"
       style={{ borderTopColor: "var(--color-border)" }}
     >
-      <div
-        className="mx-auto flex max-w-5xl items-center justify-between px-6 py-6 text-sm"
-        style={{ color: "var(--color-text-muted)" }}
-      >
-        <span>
-          {year} {person.preferredName}
-        </span>
-
-        <div className="flex items-center gap-4">
-          {person.social.github && (
-            <Link
-              href={person.social.github}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="GitHub"
-              className="transition-colors"
-              style={{
-                color: "var(--color-text-muted)",
-                transitionDuration: "var(--transition-base)",
-              }}
-            >
-              <Globe size={16} />
-            </Link>
-          )}
-          {person.social.linkedin && (
-            <Link
-              href={person.social.linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="LinkedIn"
-              className="transition-colors"
-              style={{
-                color: "var(--color-text-muted)",
-                transitionDuration: "var(--transition-base)",
-              }}
-            >
-              <ExternalLink size={16} />
-            </Link>
-          )}
-          {person.social.hashnode && (
-            <Link
-              href={person.social.hashnode}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Hashnode blog"
-              className="transition-colors"
-              style={{
-                color: "var(--color-text-muted)",
-                transitionDuration: "var(--transition-base)",
-              }}
-            >
-              <Hash size={16} />
-            </Link>
-          )}
-        </div>
-      </div>
+      {SOCIALS.map((s) => (
+        <a
+          key={s.label}
+          href={s.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={s.label}
+          className="transition-colors duration-150 hover:text-[var(--color-brand)]"
+          style={{ color: "var(--color-text-muted)" }}
+        >
+          <BrandIcon name={s.name} size={18} />
+        </a>
+      ))}
     </footer>
   );
 }

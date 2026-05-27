@@ -4,6 +4,7 @@ import { useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { Globe, ExternalLink } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { BrandIcon } from "@/components/ui/BrandIcon";
 import { person } from "@/lib/person";
 
 // ---------------------------------------------------------------------------
@@ -184,6 +185,11 @@ function BioSection() {
                 href={person.social.linkedin}
                 icon={<ExternalLink size={14} />}
                 label="linkedin.com/in/imtiazx"
+              />
+              <SocialButton
+                href={person.social.kaggleUrl}
+                icon={<BrandIcon name="kaggle" size={14} />}
+                label="kaggle.com/ximtiazx"
               />
             </div>
           </ScrollReveal>

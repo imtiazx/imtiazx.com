@@ -97,7 +97,7 @@ function CategorySection({ category, items }: { category: StackCategory; items: 
     <section className="mb-14">
       <h2
         style={{
-          fontFamily: "var(--font-serif)",
+          fontFamily: "var(--font-sans)",
           color: "var(--color-text-primary)",
           borderBottom: "2px solid var(--color-brand)",
         }}
@@ -133,7 +133,7 @@ export default function StackPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-serif)", color: "var(--color-text-primary)" }}
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           Stack

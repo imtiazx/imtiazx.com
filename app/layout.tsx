@@ -49,6 +49,28 @@ export default function RootLayout({
       suppressHydrationWarning
       className={`${dmSerifDisplay.variable} ${dmSans.variable} ${jetbrainsMono.variable} ${GeistSans.variable}`}
     >
+      <head>
+        {/* Runs synchronously before React hydrates so the correct theme class is
+            on <html> from frame one. Eliminates the light/dark flash on first paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  var stored = localStorage.getItem('theme');
+                  var theme = stored || 'system';
+                  if (theme === 'system') {
+                    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    if (prefersDark) document.documentElement.classList.add('dark');
+                  } else if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  }
+                } catch(e) {}
+              })();
+            `,
+          }}
+        />
+      </head>
       <body className="antialiased mesh-texture">
         <ThemeProvider>
           <AudioProvider>
