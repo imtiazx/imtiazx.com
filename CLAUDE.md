@@ -114,6 +114,75 @@ MetricsBar component exists but is NOT on homepage. Reserved for About page.
 
 ---
 
+## Scroll narrative system (the story) -- PLANNED, not yet built
+
+The homepage tells one continuous story. A single entity evolves from pure AI
+into a human-AI hybrid and finally into a living world, transforming section by
+section as the user scrolls. This is the spine of the site: every homepage
+section carries one beat of that transformation, rendered as a scroll-driven
+video frame sequence (Apple-style scrollytelling). The entity must flow
+seamlessly. The last frame shown for one section must read as the natural
+predecessor of the next section's first frame.
+
+### Narrative beats (one per homepage section)
+
+1. Hero -- AI brain on the RIGHT side of the hero, glowing in a slow rhythmic
+   pulse.
+2. ProjectsSection ("What I Build") -- the brain drifts from right to center
+   screen; 6 arrows radiate from it, each pointing to a project card arranged
+   around the brain.
+3. HackathonsSection ("What I Compete In") -- a racing figure mid-stride:
+   human body, AI/robot head.
+4. IdentitySection ("What I Bring") -- the figure raises a hand that is half
+   human, half machine; the 6 role titles float above the open hand.
+5. WritingSection ("What I Write") -- the same hybrid hand now holds a pen and
+   writes on paper that shows a chart.
+6. PerspectivesSection ("What I Think") -- fully human now: a person thinking,
+   seen from an angle, face obscured by low light.
+7. EarthSection (id="earth") -- opens into a living world: greenery and
+   icebergs, multiple shifting vistas.
+
+FooterCTA has no narrative frame.
+
+Transformation arc: pure AI brain > AI-headed athlete > hybrid hand > writing
+hybrid > human thinker > living earth. Continuity matters more than any single
+frame. Keep the character, lighting, and palette consistent across the whole
+arc so the cuts between sections feel like one shot.
+
+### Asset pipeline
+
+1. Generate stills -- Midjourney / DALL-E 3 / Flux, 7-10 stills per section,
+   consistent character + lighting across the whole arc.
+2. Animate -- Runway ML / Kling / Pika, short 3-5s clips per section.
+3. Extract frames -- ffmpeg, one pass per clip into a numbered frame sequence.
+4. Encode -- frames as WebP/AVIF, sized to delivery resolution; either an image
+   sequence or one packed sprite sheet per section.
+5. Wire up -- Claude Code writes the scroll-to-frame mapper: section scroll
+   progress drives the frame index.
+
+### Implementation rules (when built)
+
+- Assets live in public/sequences/<section>/ (image sequence) or
+  public/sequences/<section>.webp (sprite sheet). Never inline.
+- Frame metadata (asset path, frame count, dimensions, alt text, beat label)
+  lives in lib/narrative.ts. Never hardcoded in components. One entry per
+  homepage section.
+- Render through a single <canvas> layer. Preload + decode that section's
+  frames before it enters view, then draw frame N with drawImage. Do not mount
+  100+ <img> tags.
+- Scroll-to-frame mapping: GSAP ScrollTrigger pinned per section with scrub;
+  map section progress [0..1] to frame index [0..N-1]. Follow the existing GSAP
+  context pattern (DOM listeners outside gsap.context(), revert in cleanup).
+- prefers-reduced-motion: no scrubbing. Render one static representative frame
+  per section instead.
+- Keep frame counts modest (target ~60-120 frames/section) and lazy-load per
+  section to protect Vercel free-tier bandwidth and first paint.
+- The narrative canvas is its own layer, separate from and above
+  ScrollBackground. ScrollBackground math symbols stay at very low opacity
+  behind it.
+
+---
+
 ## Hero section design
 
 Editorial, minimal, cinematic. Not startup SaaS.
@@ -127,7 +196,10 @@ Role titles: weight 500, --color-text-primary
 Progression words (origin/evolution/trajectory): weight 500, --color-brand at 0.9 opacity
 Philosophy line: "I work at the intersection of AI research prototypes, production systems, and human chaos."
 Two CTAs: "View the Lab" (primary brand) + "Read Signal" (ghost)
-No metrics, no stats, no scroll indicator, no magnetic hover, no WebGL canvas.
+Identity text sits left/center. The RIGHT side hosts the scroll narrative's
+opening beat: the glowing AI brain (see "Scroll narrative system").
+No metrics, no stats, no scroll indicator, no magnetic hover, no WebGL canvas
+(the narrative uses a 2D <canvas> frame player, not WebGL).
 Background: existing ScrollBackground math symbols at very low opacity only.
 
 ---
@@ -148,6 +220,8 @@ lib/stack.ts -- tech grouped by 5 categories, each item has proficiency + note
 lib/person.ts -- bio, metrics, identity cards, social links, preferredName
 lib/hackathons.ts -- Active (Rogii Wellbore #115) + Completed (LangFlow 3rd)
 lib/opinions.ts -- 5 perspective cards
+lib/narrative.ts -- scroll narrative config: one entry per homepage section
+  (asset path, frame count, dimensions, alt text, beat label). PLANNED.
 
 Never hardcode any of this data in components.
 
@@ -194,6 +268,8 @@ imtiazx.ai/
       EarthSection.tsx         dark section #0C1A0E + GSAP Tux scene
       FooterCTA.tsx
       ScrollBackground.tsx     5-zone math/neural/dot/wave/glow background
+    narrative/                 PLANNED: scroll narrative system
+      NarrativeCanvas.tsx      canvas frame player + scroll-to-frame mapper
     providers/
       ThemeProvider.tsx
       AudioProvider.tsx
@@ -204,6 +280,7 @@ imtiazx.ai/
     person.ts
     hackathons.ts
     opinions.ts
+    narrative.ts               PLANNED: per-section frame-sequence config
   public/
     audio/
       ambient.mp3 (placeholder)
@@ -211,6 +288,7 @@ imtiazx.ai/
       hover.mp3 (placeholder)
       transition.mp3 (placeholder)
       toggle.mp3 (placeholder)
+    sequences/                 PLANNED: per-section frame sequences / sprite sheets
 
 ---
 
@@ -233,6 +311,11 @@ imtiazx.ai/
   documented in the file). Perspectives section background is theme-adaptive
   (--color-surface-alt) as of 2026-05-26; its perspective cards keep fixed dark
   surfaces (matches Signal page).
+- Scroll narrative (PLANNED): scroll position maps to a frame index, drawn on a
+  single 2D <canvas> (no WebGL, no <video>). GSAP ScrollTrigger pinned per
+  section with scrub; frames preloaded + decoded per section, never 100+ <img>.
+  Reduced motion renders one static frame per section. See "Scroll narrative
+  system" for the full beat list and asset pipeline.
 
 ---
 
@@ -264,6 +347,7 @@ Stack items: add to lib/stack.ts only
 New UI component: components/ui/
 New page section: components/sections/
 New page: app/[pagename]/page.tsx
+Narrative frames: drop sequence in public/sequences/, register in lib/narrative.ts
 
 ---
 
