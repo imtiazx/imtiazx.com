@@ -4,6 +4,7 @@ import { Suspense } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
 import { SplineBrain } from "@/components/ui/SplineBrain";
+import { BrainMesh } from "@/components/ui/BrainMesh";
 
 interface Role {
   role: string;
@@ -215,6 +216,10 @@ export function Hero() {
         <Suspense fallback={null}>
           <SplineBrain className="w-full h-full" />
         </Suspense>
+        {/* Wireframe sphere sits on top of the Spline brain. Only the per-node
+            hit circles capture pointer events; everywhere else passes through
+            so the brain's orbit controls keep working. */}
+        <BrainMesh className="absolute inset-0 z-30" />
       </div>
 
       <style jsx>{`
