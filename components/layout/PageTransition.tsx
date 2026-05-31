@@ -1,23 +1,12 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { usePathname } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useAudio } from "@/components/providers/AudioProvider";
 
 export function PageTransition({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const prefersReducedMotion = useReducedMotion();
-  const { playSound } = useAudio();
-  const firstRender = useRef(true);
-
-  useEffect(() => {
-    if (firstRender.current) {
-      firstRender.current = false;
-      return;
-    }
-    playSound("transition");
-  }, [pathname, playSound]);
 
   return (
     <AnimatePresence mode="wait" initial={false}>

@@ -8,7 +8,6 @@ import { hackathons, type Hackathon } from "@/lib/hackathons";
 import { ProjectCard } from "@/components/ui/ProjectCard";
 import { ChipTag } from "@/components/ui/ChipTag";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { useAudio } from "@/components/providers/AudioProvider";
 
 type Tab = "projects" | "hackathons" | "open-source";
 type ProjectFilter = "All" | ProjectStatus;
@@ -73,7 +72,6 @@ function PillButton({
 }
 
 function HackathonDetailCard({ h }: { h: Hackathon }) {
-  const { playSound } = useAudio();
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
   const isActive = h.status === "Active";
@@ -193,7 +191,6 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
             href={h.competitionUrl}
             target="_blank"
             rel="noopener noreferrer"
-            onClick={() => playSound("click")}
             style={{
               fontFamily: "var(--font-sans)",
               color: "var(--color-text-muted)",
@@ -360,7 +357,11 @@ export default function LabPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+          }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           Lab

@@ -2,9 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Sun, Moon, Monitor, Volume2, VolumeX, Music } from "lucide-react";
+import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
-import { useAudio, type AudioState } from "@/components/providers/AudioProvider";
 import { person } from "@/lib/person";
 
 const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
@@ -22,30 +21,16 @@ function ThemeIcon({ theme }: { theme: Theme }) {
   return <Sun size={16} />;
 }
 
-function AudioIcon({ state }: { state: AudioState }) {
-  if (state === "mute")    return <VolumeX size={16} />;
-  if (state === "ambient") return <Music size={16} />;
-  return <Volume2 size={16} />;
-}
-
 export function Nav() {
   const { theme, setTheme } = useTheme();
-  const { audioState, cycleAudio, playSound } = useAudio();
   const pathname = usePathname();
 
   const handleThemeToggle = () => {
-    playSound("toggle");
     const idx = THEME_CYCLE.indexOf(theme);
     setTheme(THEME_CYCLE[(idx + 1) % THEME_CYCLE.length]);
   };
 
-  const handleAudioToggle = () => {
-    playSound("toggle");
-    cycleAudio();
-  };
-
   const handleEarthClick = () => {
-    playSound("click");
     document.getElementById("earth")?.scrollIntoView({ behavior: "smooth" });
   };
 
@@ -119,15 +104,6 @@ export function Nav() {
             aria-label={`Switch theme (current: ${theme})`}
           >
             <ThemeIcon theme={theme} />
-          </button>
-
-          <button
-            onClick={handleAudioToggle}
-            className="flex h-8 w-8 items-center justify-center rounded-md transition-colors"
-            style={{ color: "var(--color-brand)" }}
-            aria-label={`Switch audio (current: ${audioState})`}
-          >
-            <AudioIcon state={audioState} />
           </button>
         </div>
       </div>

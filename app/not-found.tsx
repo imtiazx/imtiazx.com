@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-import { useAudio } from "@/components/providers/AudioProvider";
 
 // Fixed black/white penguin fills regardless of theme (matches EarthSection's Tux).
 function TuxStatic() {
@@ -42,8 +41,6 @@ function TuxStatic() {
 }
 
 export default function NotFound() {
-  const { playSound } = useAudio();
-
   return (
     <section
       className="container relative flex flex-col items-center justify-center text-center"
@@ -103,7 +100,6 @@ export default function NotFound() {
         <ScrollReveal variant="fadeUp" delay={0.15}>
           <Link
             href="/lab"
-            onClick={() => playSound("click")}
             style={{
               backgroundColor: "var(--color-brand)",
               color: "#FFFFFF",

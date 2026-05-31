@@ -3,9 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { usePathname } from "next/navigation";
 import { Sun, Moon, Monitor } from "lucide-react";
-import { useAudio } from "@/components/providers/AudioProvider";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
-import { playUnlock } from "@/lib/sound";
 
 const NAME = "imtiaz";
 const TYPE_BASE_MS = 70;
@@ -38,7 +36,6 @@ function ThemeIcon({ theme }: { theme: Theme }) {
 
 export function PageLoader() {
   const { theme, setTheme } = useTheme();
-  const { audioState } = useAudio();
 
   // When the document first loads on the intro gateway ("/"), that scene owns
   // the reveal, so the standalone loader stays out of the way for the whole
@@ -54,7 +51,6 @@ export function PageLoader() {
   const [ripples, setRipples] = useState<Ripple[]>([]);
 
   const overlayRef = useRef<HTMLDivElement | null>(null);
-  const audioStateRef = useRef(audioState);
   const reducedRef = useRef(false);
   const dismissedRef = useRef(false);
   const rippleIdRef = useRef(0);
@@ -62,22 +58,6 @@ export function PageLoader() {
   // layout), so the effect cleanup that restores scroll never fires. We restore
   // it explicitly in beginDismiss, reading the value saved by the lock effect.
   const previousOverflowRef = useRef("");
-
-  useEffect(() => {
-    audioStateRef.current = audioState;
-  }, [audioState]);
-
-  const canPlayAudio = useCallback((): boolean => {
-    if (reducedRef.current) return false;
-    if (audioStateRef.current === "mute") return false;
-    return true;
-  }, []);
-
-  // The same soft unlock chime used by the intro gateway.
-  const playClickSound = useCallback(() => {
-    if (!canPlayAudio()) return;
-    playUnlock();
-  }, [canPlayAudio]);
 
   const beginDismiss = useCallback(() => {
     if (dismissedRef.current) return;
@@ -157,8 +137,6 @@ export function PageLoader() {
     if (dismissedRef.current) return;
     const x = e.clientX;
     const y = e.clientY;
-
-    playClickSound();
 
     const burst: Ripple[] = [0, 120, 240].map((delay) => ({
       id: rippleIdRef.current++,

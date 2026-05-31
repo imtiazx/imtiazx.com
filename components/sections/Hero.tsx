@@ -1,8 +1,9 @@
 "use client";
 
+import { Suspense } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import Link from "next/link";
-import { useAudio } from "@/components/providers/AudioProvider";
+import { SplineBrain } from "@/components/ui/SplineBrain";
 
 interface Role {
   role: string;
@@ -42,7 +43,6 @@ function renderChars(text: string, keyPrefix: string) {
 
 export function Hero() {
   const prefersReducedMotion = useReducedMotion() ?? false;
-  const { playSound } = useAudio();
 
   const lineParent = (delay: number) =>
     prefersReducedMotion
@@ -66,14 +66,15 @@ export function Hero() {
 
   return (
     <section
-      className="relative flex items-center"
+      className="relative flex flex-col lg:flex-row items-center"
       style={{
         isolation: "isolate",
         minHeight: "calc(100vh - 56px)",
       }}
     >
+      <div className="flex-1 z-10 w-full relative pointer-events-none">
       <div
-        className="container relative w-full"
+        className="container relative w-full pointer-events-auto"
         style={{
           paddingTop: "clamp(6rem, 12vw, 8rem)",
           paddingBottom: "clamp(4rem, 8vw, 6rem)",
@@ -166,7 +167,6 @@ export function Hero() {
           >
             <Link
               href="/lab"
-              onClick={() => playSound("click")}
               className="hero-cta-primary"
               style={{
                 background: "var(--color-brand)",
@@ -187,7 +187,6 @@ export function Hero() {
             </Link>
             <Link
               href="/signal"
-              onClick={() => playSound("click")}
               className="hero-cta-secondary"
               style={{
                 background: "transparent",
@@ -209,6 +208,13 @@ export function Hero() {
             </Link>
           </motion.div>
         </div>
+      </div>
+      </div>
+
+      <div className="hidden lg:block absolute right-0 top-0 bottom-0 w-[45%] z-20">
+        <Suspense fallback={null}>
+          <SplineBrain className="w-full h-full" />
+        </Suspense>
       </div>
 
       <style jsx>{`

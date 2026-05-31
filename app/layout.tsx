@@ -3,7 +3,6 @@ import { DM_Serif_Display, DM_Sans, JetBrains_Mono } from "next/font/google";
 import { GeistSans } from "geist/font/sans";
 import "./globals.css";
 import { ThemeProvider } from "@/components/providers/ThemeProvider";
-import { AudioProvider } from "@/components/providers/AudioProvider";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { PageTransition } from "@/components/layout/PageTransition";
@@ -73,14 +72,12 @@ export default function RootLayout({
       </head>
       <body className="antialiased mesh-texture">
         <ThemeProvider>
-          <AudioProvider>
-            <PageLoader />
-            <ScrollProgress />
-            <CustomCursor />
-            <Nav />
-            <PageTransition>{children}</PageTransition>
-            <Footer />
-          </AudioProvider>
+          <PageLoader />
+          <ScrollProgress />
+          <CustomCursor />
+          <Nav />
+          <PageTransition>{children}</PageTransition>
+          <Footer />
         </ThemeProvider>
       </body>
     </html>

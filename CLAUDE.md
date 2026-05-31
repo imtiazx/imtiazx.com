@@ -19,13 +19,16 @@ The site must feel premium, engineered, and intentional -- not like a template.
 - Framework: Next.js 14 App Router
 - Styling: Tailwind CSS plus CSS custom properties for design tokens
 - Animation: Framer Motion + GSAP 3.15 (free, all plugins included)
-- Audio: Howler.js
 - Icons: Lucide React (SVG only, never emoji)
 - Fonts:
-  - DM Serif Display (--font-serif): section headings
-  - DM Sans (--font-sans): body text, UI
+  - DM Serif Display (--font-serif): editorial accents (currently unused on
+    homepage; kept available)
+  - DM Sans (--font-sans): body text, UI, all subtitles/descriptions, in-card
+    titles (h3 and smaller)
   - JetBrains Mono (--font-mono): code, tags, technical labels
-  - Geist Sans (--font-display): hero identity text only
+  - Geist Sans (--font-display): hero identity text AND every section / page
+    title (h1 and section-level h2). Always paired with fontWeight: 500 so the
+    title weight matches the hero identity text.
   - All from Google Fonts / geist npm package
 - Deployment: Vercel free tier
 
@@ -39,7 +42,6 @@ Never hardcode content inside components -- all content comes from lib/.
 Never invent new color values -- use CSS custom properties from globals.css only.
 Run npm run build before considering any task complete.
 Test all three themes (light, dark, system) after every UI change.
-Test audio toggle in all three states after any audio-related change.
 Verify prefers-reduced-motion disables all animation.
 
 ---
@@ -64,17 +66,6 @@ Implementation: .dark class on html element
 Persistence: localStorage key "theme"
 Theme default: system on first visit
 Toggle cycles: system > light > dark > system
-
----
-
-## Audio system
-
-Three states: ambient | interactive | mute
-Default state: interactive
-Toggle in nav cycles through states in order
-All audio files in /public/audio/
-Managed by Howler.js + Web Audio API for click sounds
-Volume cap on ambient music: 0.15
 
 ---
 
@@ -245,9 +236,9 @@ imtiazx.ai/
     not-found.tsx       404 with static Tux penguin
   components/
     layout/
-      Nav.tsx           sticky glass nav, theme/audio toggles
+      Nav.tsx           sticky glass nav, theme toggle
       Footer.tsx
-      PageTransition.tsx route fade with transition sound
+      PageTransition.tsx route fade transition
     ui/
       PageLoader.tsx    typewriter greeting loader (fires every hard load)
       ScrollProgress.tsx homepage scroll progress bar
@@ -272,7 +263,6 @@ imtiazx.ai/
       NarrativeCanvas.tsx      canvas frame player + scroll-to-frame mapper
     providers/
       ThemeProvider.tsx
-      AudioProvider.tsx
   lib/
     projects.ts
     posts.ts
@@ -282,12 +272,6 @@ imtiazx.ai/
     opinions.ts
     narrative.ts               PLANNED: per-section frame-sequence config
   public/
-    audio/
-      ambient.mp3 (placeholder)
-      click.mp3 (placeholder)
-      hover.mp3 (placeholder)
-      transition.mp3 (placeholder)
-      toggle.mp3 (placeholder)
     sequences/                 PLANNED: per-section frame sequences / sprite sheets
 
 ---
@@ -306,7 +290,6 @@ imtiazx.ai/
 - ScrollReveal TDZ fix: IntersectionObserver created outside gsap.context().
   Cleanup in useEffect return calls io.disconnect() and ctx.revert() separately.
 - Theme default: "system" on first visit. Toggle cycles system > light > dark > system.
-- Audio click: Web Audio API singleton (AudioContext ref, lazy init).
 - Earth section: hardcoded dark background regardless of theme (intentional,
   documented in the file). Perspectives section background is theme-adaptive
   (--color-surface-alt) as of 2026-05-26; its perspective cards keep fixed dark

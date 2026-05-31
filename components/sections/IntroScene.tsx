@@ -4,10 +4,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
-import { useAudio } from "@/components/providers/AudioProvider";
 import { SymbolCloud } from "@/components/intro/SymbolCloud";
 import { IntroLogo } from "@/components/intro/IntroLogo";
-import { playUnlock } from "@/lib/sound";
 
 const IDLE_MS = 30000; // 30s of inactivity before landing on the homepage
 const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
@@ -20,8 +18,10 @@ function ThemeIcon({ theme }: { theme: Theme }) {
 
 export function IntroScene() {
   const { theme, setTheme } = useTheme();
-  const { audioState } = useAudio();
   const router = useRouter();
+  // Flipped on click/idle/keydown. Tells SymbolCloud to stop its RAF
+  // immediately so the main thread is free for /home compile + Spline fetch.
+  const [leaving, setLeaving] = useState(false);
 
   const handleThemeToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // don't trigger the gateway's click-to-enter
@@ -50,22 +50,34 @@ export function IntroScene() {
   // Prefetch so the idle handoff to the homepage is instant.
   useEffect(() => {
     router.prefetch("/home");
+    // Warm the browser cache for the 3D scene file the Hero will request, so
+    // /home's first paint isn't blocked on a third-party CDN roundtrip.
+    const link = document.createElement("link");
+    link.rel = "prefetch";
+    link.as = "fetch";
+    link.crossOrigin = "anonymous";
+    link.href = "https://prod.spline.design/9vLKae8a2HyRt6oH/scene.splinecode";
+    document.head.appendChild(link);
+    return () => {
+      link.remove();
+    };
   }, [router]);
 
   const navigatedRef = useRef(false);
   const enterHome = useCallback(() => {
     if (navigatedRef.current) return;
     navigatedRef.current = true;
-    router.push("/home");
+    setLeaving(true);
+    // Defer the push by one frame so React commits `leaving=true` and the
+    // canvas RAF halts before /home starts mounting. Without this the
+    // SymbolCloud loop keeps stealing CPU during the heavy route work.
+    requestAnimationFrame(() => router.push("/home"));
   }, [router]);
 
-  // A real click is the user gesture that unlocks Web Audio, so the chime
-  // plays here -- not on the idle or keyboard handoff.
   const handleSceneClick = useCallback(() => {
     if (navigatedRef.current) return;
-    if (audioState !== "mute") playUnlock();
     enterHome();
-  }, [audioState, enterHome]);
+  }, [enterHome]);
 
   // Idle timer: any pointer / key / touch activity resets the 30s countdown.
   // The cloud reacts to the cursor; once the visitor stops, we move on.
@@ -124,7 +136,7 @@ export function IntroScene() {
         backgroundColor: "var(--color-bg)",
       }}
     >
-      <SymbolCloud theme={resolvedTheme} />
+      <SymbolCloud theme={resolvedTheme} paused={leaving} />
       <IntroLogo />
 
       <button

@@ -6,7 +6,6 @@ import { motion, useReducedMotion } from "framer-motion";
 // Code2 (the </> mark) is the closest match for the "Code" repo link.
 import { ExternalLink, Code2, Play, BookOpen } from "lucide-react";
 import type { Project, ProjectLinks } from "@/lib/projects";
-import { useAudio } from "@/components/providers/AudioProvider";
 import { StatusBadge } from "./StatusBadge";
 import { ChipTag } from "./ChipTag";
 
@@ -28,7 +27,6 @@ const LINK_BASE =
   "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px]";
 
 export function ProjectCard({ project }: ProjectCardProps) {
-  const { playSound } = useAudio();
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
 
@@ -108,7 +106,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
                 href={href}
                 target="_blank"
                 rel="noopener noreferrer"
-                onClick={() => playSound("click")}
                 style={{
                   fontFamily: "var(--font-sans)",
                   color: "var(--color-text-muted)",
