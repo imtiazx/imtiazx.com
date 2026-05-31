@@ -1,36 +1,69 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
+import { useMemo } from "react";
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import {
+  ArrowRight,
+  Database,
+  ShieldAlert,
+  Rocket,
+  Gauge,
+  Bot,
+  FileText,
+  type LucideIcon,
+} from "lucide-react";
 import { posts } from "@/lib/posts";
-import { PostCard } from "@/components/ui/PostCard";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
-
-const containerVariants = {
-  hidden: {},
-  visible: { transition: { staggerChildren: 0.08 } },
-};
-
-const itemVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.5 } },
-};
+import WritingsCpuLoop, {
+  type CpuLoopItem,
+} from "@/components/ui/WritingsCpuLoop";
 
 const HEADING = "What I Write";
 const SUBTEXT =
   "Technical writing, architecture breakdowns, production AI essays, research thinking.";
 
+// Per-post icon keyed by id. Each glyph maps to the piece's subject so the
+// die-perimeter nodes read at a glance.
+const POST_ICONS: Record<string, LucideIcon> = {
+  "rag-production": Database,
+  "red-teaming-enterprise-llms": ShieldAlert,
+  "why-enterprise-ai-fails": Rocket,
+  "beyond-benchmarks": Gauge,
+  "agentic-pipelines-production": Bot,
+};
+
+const CATEGORY_LABELS: Record<string, string> = {
+  technical: "Technical",
+  "responsible-ai": "Responsible AI",
+  strategy: "Strategy",
+  research: "Research",
+};
+
 export function WritingSection() {
-  const prefersReducedMotion = useReducedMotion();
+  const items = useMemo<CpuLoopItem[]>(
+    () =>
+      posts.map((post) => ({
+        id: post.id,
+        title: post.title,
+        excerpt: post.excerpt,
+        category: CATEGORY_LABELS[post.category] ?? post.category,
+        icon: POST_ICONS[post.id] ?? FileText,
+        href: `/signal#${post.slug}`,
+      })),
+    [],
+  );
 
   return (
     <section className="py-20 lg:py-28">
       <div className="container">
-        <div className="mb-12">
-          <ScrollReveal variant="scramble">
+        <div className="mb-8">
+          <ScrollReveal variant="fadeUp">
             <h2
-              style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+              style={{
+                fontFamily: "var(--font-display)",
+                fontWeight: 500,
+                color: "var(--color-text-primary)",
+              }}
               className="text-3xl md:text-4xl"
             >
               {HEADING}
@@ -44,21 +77,9 @@ export function WritingSection() {
           </p>
         </div>
 
-        <motion.div
-          variants={containerVariants}
-          initial={prefersReducedMotion ? "visible" : "hidden"}
-          whileInView="visible"
-          viewport={{ once: true, amount: 0.05 }}
-          className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch"
-        >
-          {posts.map((post) => (
-            <motion.div key={post.id} variants={itemVariants} className="h-full">
-              <PostCard post={post} />
-            </motion.div>
-          ))}
-        </motion.div>
+        <WritingsCpuLoop items={items} />
 
-        <div className="mt-12 flex justify-end">
+        <div className="mt-8 flex justify-end">
           <Link
             href="/signal"
             style={{ color: "var(--color-brand)", fontFamily: "var(--font-sans)" }}

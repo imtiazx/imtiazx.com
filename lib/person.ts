@@ -43,19 +43,11 @@ export const person: Person = {
   ],
   identityCards: [
     {
-      title: "GenAI Engineer",
-      description: "RAG systems, agentic pipelines, LLM APIs, production evals",
-    },
-    {
-      title: "Responsible AI",
-      description: "Bias auditing, safety evals, red-teaming, governance at scale",
-    },
-    {
       title: "Data Scientist",
       description: "Statistical modeling, ML pipelines, experiment design",
     },
     {
-      title: "System Designer",
+      title: "System Architect",
       description: "API architecture, latency and cost tradeoffs, infra patterns",
     },
     {
@@ -63,8 +55,16 @@ export const person: Person = {
       description: "Translating business problems into deployed AI end to end",
     },
     {
-      title: "Technical Writer",
-      description: "Deep-dive articles, open-source docs, public learning",
+      title: "GenAI Engineer",
+      description: "RAG systems, agentic pipelines, LLM APIs, production evals",
+    },
+    {
+      title: "Responsible AI Specialist",
+      description: "Bias auditing, safety evals, red-teaming, governance at scale",
+    },
+    {
+      title: "AI Product Strategist",
+      description: "Roadmaps, AI-product fit, stakeholder alignment, delivery direction",
     },
   ],
   philosophy: [

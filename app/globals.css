@@ -218,22 +218,16 @@ body {
   to   { box-shadow: 0 0 8px 2px currentColor; }
 }
 
-/* PerspectivesSection: continuous right-to-left auto-scroll carousel. The track
-   renders the cards twice end-to-end; translateX(-50%) advances exactly one copy
-   for a seamless loop. width:max-content makes -50% resolve against the content
-   width (not the parent). Duration is tuned to ~40px/s for the 10-card set; the
-   reduced-motion branch in the component renders a plain scroller instead. */
-@keyframes scrollLeft {
-  from { transform: translateX(0); }
-  to   { transform: translateX(-50%); }
-}
-.perspectives-track {
-  width: max-content;
-  animation: scrollLeft 90s linear infinite;
-  will-change: transform;
-}
-.perspectives-carousel:hover .perspectives-track {
-  animation-play-state: paused;
+/* Text-only glow: pulses the glyphs themselves (no rectangular box around the
+   element). Used by CryptoSection specialty cards so the *title text* glows
+   on card hover, not an implicit bounding box. */
+@keyframes titleGlow {
+  from { text-shadow: 0 0 0 transparent; }
+  to   {
+    text-shadow:
+      0 0 6px currentColor,
+      0 0 14px color-mix(in srgb, currentColor 55%, transparent);
+  }
 }
 
 /* Earth: typewriter cursor blink */
