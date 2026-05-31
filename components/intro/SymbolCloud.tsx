@@ -5,6 +5,10 @@ import { introSymbols } from "@/lib/introSymbols";
 
 interface SymbolCloudProps {
   theme: "light" | "dark";
+  // When true, the animation loop is stopped immediately. Used by IntroScene
+  // to free the main thread the instant the user clicks to navigate so the
+  // /home route compile + Spline scene fetch don't fight a busy canvas.
+  paused?: boolean;
 }
 
 // A point on the unit sphere plus its text and a per-point shell radius.
@@ -170,8 +174,11 @@ const GLOW_RADIUS = 150; // px around the cursor that lights words up
 const ACTIVE_WINDOW_MS = 1800; // how long after the last move the field stays hot
 const BASE_WHIRL = 0.0022; // gentle idle drift when the user is not steering
 const HALO_BOOST = 4; // how hard mouse speed accelerates the halo spin
-const STAR_COUNT_DARK = 160; // dark builds the full field
-const STAR_COUNT_LIGHT = 120; // light draws the first 120 of the same field
+const STAR_COUNT_DARK = 140; // dark builds the full field
+const STAR_COUNT_LIGHT = 100; // light draws the first 100 of the same field
+// When the user is idle (no recent pointer movement) we drop to ~30fps to halve
+// canvas cost without changing the look. ACTIVE_WINDOW_MS still governs energy.
+const IDLE_FRAME_MS = 1000 / 30;
 // Halo sizing. The earlier "trim 10% by count" approach thinned the halo but
 // the largest arcs (up to 2.0x the event horizon) still bled off the top and
 // bottom. Instead we cap the outermost arc at MAX_HALO_FACTOR and let layout()
@@ -180,8 +187,8 @@ const STAR_COUNT_LIGHT = 120; // light draws the first 120 of the same field
 // the ring system crowds just outside the word cloud and reads as one complete
 // sphere on a fit screen, never clipped.
 const MAX_HALO_FACTOR = 1.7; // outermost arc radius as a multiple of the event horizon
-const FILAMENT_COUNT = 88; // discrete arc filaments in the accretion halo
-const RING_COUNT = 150; // arcs in the continuous outer ring band
+const FILAMENT_COUNT = 60; // discrete arc filaments in the accretion halo
+const RING_COUNT = 100; // arcs in the continuous outer ring band
 
 function smoothstep(edge0: number, edge1: number, value: number): number {
   const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
@@ -315,12 +322,15 @@ function buildRingArcs(n: number): RingArc[] {
   return arcs;
 }
 
-export function SymbolCloud({ theme }: SymbolCloudProps) {
+export function SymbolCloud({ theme, paused = false }: SymbolCloudProps) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const themeRef = useRef(theme);
   themeRef.current = theme;
+  const pausedRef = useRef(paused);
+  pausedRef.current = paused;
 
   const repaintRef = useRef<() => void>(() => {});
+  const resumeRef = useRef<() => void>(() => {});
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -646,11 +656,28 @@ export function SymbolCloud({ theme }: SymbolCloudProps) {
 
     let raf = 0;
     const tick = () => {
+      // Stop everything if the parent has signalled a handoff or the tab is
+      // hidden. Re-armed by the visibility/paused effect below.
+      if (pausedRef.current || document.hidden) {
+        raf = 0;
+        return;
+      }
+
       // Re-measure if the box changed since last frame (ResizeObserver lag).
       if (canvas.clientWidth !== cssW || canvas.clientHeight !== cssH) layout();
 
       const now = performance.now();
       const dt = Math.min(50, now - lastFrame); // clamp tab-blur catch-up jumps
+
+      // Idle throttle: when the user hasn't moved in ACTIVE_WINDOW_MS, render
+      // at ~30fps instead of 60. Halves canvas cost during the long idle
+      // wait before auto-handoff without changing the look.
+      const idle = now - lastMoveAt > ACTIVE_WINDOW_MS;
+      if (idle && now - lastFrame < IDLE_FRAME_MS) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+
       lastFrame = now;
 
       const active = now - lastMoveAt < ACTIVE_WINDOW_MS;
@@ -709,6 +736,13 @@ export function SymbolCloud({ theme }: SymbolCloudProps) {
     readStyles();
     layout();
 
+    const ensureRunning = () => {
+      if (reduced || pausedRef.current || document.hidden) return;
+      if (raf !== 0) return;
+      lastFrame = performance.now();
+      raf = requestAnimationFrame(tick);
+    };
+
     if (reduced) {
       // Single static frame: a slightly tilted globe over a still accretion
       // halo (arcs held at their current angles).
@@ -717,8 +751,14 @@ export function SymbolCloud({ theme }: SymbolCloudProps) {
       draw();
     } else {
       window.addEventListener("pointermove", onPointerMove, { passive: true });
-      raf = requestAnimationFrame(tick);
+      ensureRunning();
     }
+
+    const onVisibility = () => ensureRunning();
+    document.addEventListener("visibilitychange", onVisibility);
+
+    // Expose a restart hook so the paused prop's effect (below) can resume.
+    resumeRef.current = ensureRunning;
 
     const ro = new ResizeObserver(() => {
       layout();
@@ -737,10 +777,19 @@ export function SymbolCloud({ theme }: SymbolCloudProps) {
 
     return () => {
       cancelAnimationFrame(raf);
+      raf = 0;
       window.removeEventListener("pointermove", onPointerMove);
+      document.removeEventListener("visibilitychange", onVisibility);
       ro.disconnect();
+      resumeRef.current = () => {};
     };
   }, []);
+
+  // When `paused` flips back to false (rare — we mainly use it for the
+  // one-way handoff to /home), kick the RAF back on.
+  useEffect(() => {
+    if (!paused) resumeRef.current();
+  }, [paused]);
 
   useEffect(() => {
     repaintRef.current();
