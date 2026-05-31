@@ -7,7 +7,7 @@ import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
 import { SymbolCloud } from "@/components/intro/SymbolCloud";
 import { IntroLogo } from "@/components/intro/IntroLogo";
 
-const IDLE_MS = 30000; // 30s of inactivity before landing on the homepage
+const IDLE_MS = 10000; // 10s of inactivity before landing on the homepage
 const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
 
 function ThemeIcon({ theme }: { theme: Theme }) {
@@ -22,6 +22,10 @@ export function IntroScene() {
   // Flipped on click/idle/keydown. Tells SymbolCloud to stop its RAF
   // immediately so the main thread is free for /home compile + Spline fetch.
   const [leaving, setLeaving] = useState(false);
+  // Surfaced after a 400ms delay once `leaving` is true. Fast prod navigations
+  // never trigger it; slow dev-mode compiles of /home do, so the visitor
+  // sees a working indicator instead of a frozen screen.
+  const [showHint, setShowHint] = useState(false);
 
   const handleThemeToggle = (e: React.MouseEvent) => {
     e.stopPropagation(); // don't trigger the gateway's click-to-enter
@@ -120,6 +124,14 @@ export function IntroScene() {
     };
   }, []);
 
+  // Loading hint after click: 400ms delay so prod (instant) gets no flash,
+  // dev (slow compile) gets a visible "working" indicator.
+  useEffect(() => {
+    if (!leaving) return;
+    const t = window.setTimeout(() => setShowHint(true), 400);
+    return () => window.clearTimeout(t);
+  }, [leaving]);
+
   return (
     <div
       id="intro-scene"
@@ -167,9 +179,52 @@ export function IntroScene() {
         <ThemeIcon theme={theme} />
       </button>
 
+      {showHint && (
+        <div className="intro-loading-hint" aria-hidden>
+          <span className="intro-spinner" />
+          <span>entering</span>
+        </div>
+      )}
+
       <style jsx>{`
         .intro-theme-toggle:hover {
           background-color: color-mix(in srgb, var(--color-brand) 12%, transparent);
+        }
+        .intro-loading-hint {
+          position: absolute;
+          bottom: 32px;
+          left: 50%;
+          transform: translateX(-50%);
+          z-index: 25;
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          font-family: var(--font-mono);
+          font-size: 11px;
+          letter-spacing: 0.16em;
+          text-transform: uppercase;
+          color: var(--color-text-muted);
+          opacity: 0;
+          animation: introHintFadeIn 280ms ease-out forwards;
+          pointer-events: none;
+        }
+        .intro-spinner {
+          width: 12px;
+          height: 12px;
+          border-radius: 50%;
+          border: 1.5px solid color-mix(in srgb, var(--color-brand) 22%, transparent);
+          border-top-color: var(--color-brand);
+          animation: introSpin 700ms linear infinite;
+        }
+        @keyframes introSpin {
+          to { transform: rotate(360deg); }
+        }
+        @keyframes introHintFadeIn {
+          to { opacity: 1; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .intro-spinner { animation: none; }
+          .intro-loading-hint { animation: none; opacity: 1; }
         }
       `}</style>
     </div>

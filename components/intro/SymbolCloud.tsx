@@ -140,9 +140,15 @@ const RING_ALPHA: { dark: [number, number]; light: [number, number] } = {
 // custom properties (read via getComputedStyle in readStyles); only the opacity
 // variants live here. Dark reads as a deep-space accretion disk (blue haze /
 // brand-orange disk), light as warm amber/orange storm clouds.
+//
+// With the outer ring band removed (RING_COUNT = 0), this cloud is now the
+// dominant halo — bumped a few stops so it reads as a soft shadow surround
+// rather than a faint wash. This is what bridges the intro to the homepage:
+// the homepage has a similar soft brand-orange ambient (Spline brain glow +
+// dot grid), so a shadowy halo on the intro hands off without a hard cut.
 const CLOUD_ALPHA = {
-  dark: { haze: 0.1, band: 0.16, core: 0.22 },
-  light: { haze: 0.14, band: 0.2, core: 0.3 },
+  dark: { haze: 0.18, band: 0.24, core: 0.32 },
+  light: { haze: 0.22, band: 0.30, core: 0.40 },
 } as const;
 
 // Star color for dark. Light stars sample LIGHT_STAR_SHADES instead.
@@ -187,8 +193,13 @@ const IDLE_FRAME_MS = 1000 / 30;
 // the ring system crowds just outside the word cloud and reads as one complete
 // sphere on a fit screen, never clipped.
 const MAX_HALO_FACTOR = 1.7; // outermost arc radius as a multiple of the event horizon
-const FILAMENT_COUNT = 60; // discrete arc filaments in the accretion halo
-const RING_COUNT = 100; // arcs in the continuous outer ring band
+// Filament + ring counts were trimmed in service of a softer halo. The
+// previous 60+100 arc setup produced a busy bright outer ring; with
+// RING_COUNT = 0 and the cloud opacities lifted, the cyclone radial gradients
+// now own the halo and read as a shadowy surround — closer to the homepage's
+// quieter visual language so the route handoff doesn't feel like a hard cut.
+const FILAMENT_COUNT = 24;
+const RING_COUNT = 0;
 
 function smoothstep(edge0: number, edge1: number, value: number): number {
   const t = Math.min(1, Math.max(0, (value - edge0) / (edge1 - edge0)));
