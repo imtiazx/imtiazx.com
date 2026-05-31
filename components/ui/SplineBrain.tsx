@@ -13,16 +13,13 @@ const Spline = dynamic(() => import("@splinetool/react-spline"), {
 const SCENE_URL =
   "https://prod.spline.design/9vLKae8a2HyRt6oH/scene.splinecode";
 
-// Tints the Spline particles toward brand orange (#EA580C light / #FB923C dark).
-// sepia normalizes hue to warm brown; hue-rotate dials it to orange; saturate +
-// brightness/contrast tune for theme.
-const LIGHT_FILTER =
-  "sepia(1) hue-rotate(-15deg) saturate(3.2) brightness(0.95) contrast(1.05)";
-const DARK_FILTER =
-  "sepia(1) hue-rotate(-10deg) saturate(2.8) brightness(1.1) contrast(1.1)";
-
 // Spline OrbitControls autoRotateSpeed default is 2.0; 0.4 = slow drift.
 const AUTO_ROTATE_SPEED = 0.4;
+// How long after onLoad before we reveal. The prior single-rAF guard let
+// Spline's first-frame texture/material warm-up land inside the CSS fade-in,
+// which read as a "blink". Combined with no filter chain over the canvas,
+// this fully buries the warm-up frames.
+const REVEAL_GUARD_MS = 120;
 
 interface SplineBrainProps {
   className?: string;
@@ -57,32 +54,26 @@ class SplineErrorBoundary extends Component<
 }
 
 export function SplineBrain({ className }: SplineBrainProps) {
-  const [isDark, setIsDark] = useState(false);
   const [canRender, setCanRender] = useState(false);
-  // Hides the wrapper until the scene background has been forced transparent.
-  // Without this, Spline's default scene BG paints for ~1 frame and the orange
-  // CSS filter turns it into a solid orange flash.
+  // Hides the wrapper until the scene background has been forced transparent
+  // AND the warm-up window has passed. Without this, Spline's first-frame
+  // intermediate paints (texture decode, material init) read as a flash.
   const [loaded, setLoaded] = useState(false);
   // Bumping this key remounts <Spline>, which is the only reliable way to reset
   // the camera — OrbitControls owns its own spherical state and overrides any
   // direct camera-transform change on the next frame.
   const [sceneKey, setSceneKey] = useState(0);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const reducedMotionRef = useRef(false);
   const splineRef = useRef<Application | null>(null);
+  // Track whether the scene is currently allowed to run — controlled by the
+  // IntersectionObserver below. We call app.stop() when the Hero scrolls
+  // offscreen and app.play() when it re-enters, so the WebGL render loop
+  // isn't burning frames behind the rest of the page.
+  const playingRef = useRef(false);
 
   useEffect(() => {
     setCanRender(webglAvailable());
-
-    const html = document.documentElement;
-    setIsDark(html.classList.contains("dark"));
-
-    const observer = new MutationObserver(() => {
-      setIsDark(html.classList.contains("dark"));
-    });
-    observer.observe(html, {
-      attributes: true,
-      attributeFilter: ["class"],
-    });
 
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     reducedMotionRef.current = mq.matches;
@@ -90,26 +81,62 @@ export function SplineBrain({ className }: SplineBrainProps) {
       reducedMotionRef.current = e.matches;
       if (e.matches && splineRef.current) {
         splineRef.current.stop();
+        playingRef.current = false;
       }
     };
     mq.addEventListener("change", onMotionChange);
 
     return () => {
-      observer.disconnect();
       mq.removeEventListener("change", onMotionChange);
     };
+  }, []);
+
+  // Pause the WebGL render loop when the Hero scrolls offscreen. Resume it
+  // when the user comes back. Saves substantial GPU/CPU on long scroll-down
+  // sessions where the brain would otherwise keep rotating invisibly.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const app = splineRef.current;
+          if (!app) continue;
+          if (entry.isIntersecting && !reducedMotionRef.current) {
+            if (!playingRef.current) {
+              app.play();
+              playingRef.current = true;
+            }
+          } else {
+            if (playingRef.current) {
+              app.stop();
+              playingRef.current = false;
+            }
+          }
+        }
+      },
+      { rootMargin: "100px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
   }, []);
 
   const handleLoad = (app: Application) => {
     splineRef.current = app;
     app.setBackgroundColor("rgba(0,0,0,0)");
-    // Reveal on the next frame so the transparent BG is painted before we
-    // fade the (filter-tinted) wrapper in.
-    requestAnimationFrame(() => setLoaded(true));
+    // Reveal only after a short guard window: the first ~100ms of a Spline
+    // scene includes texture decodes + material initialization that paint
+    // intermediate frames. Without the guard, those land inside the fade-in
+    // and read as the "Spline blink".
+    setTimeout(() => setLoaded(true), REVEAL_GUARD_MS);
+
     if (reducedMotionRef.current) {
       app.stop();
+      playingRef.current = false;
       return;
     }
+    playingRef.current = true;
 
     // Enable slow horizontal auto-rotation on the OrbitControls instance.
     // Dragging still works — user input overrides momentarily, then the
@@ -134,16 +161,12 @@ export function SplineBrain({ className }: SplineBrainProps) {
 
   return (
     <div
+      ref={wrapRef}
       className={className}
       onDoubleClick={resetCamera}
       style={{
-        filter: isDark ? DARK_FILTER : LIGHT_FILTER,
-        // `screen` blend keeps bright particles visible while letting the
-        // brain's dark internal mesh dissolve into the page background.
-        // Works in both themes.
-        mixBlendMode: "screen",
         opacity: loaded ? 1 : 0,
-        transition: "filter 0.4s ease, opacity 0.35s ease",
+        transition: "opacity 350ms ease",
         // Let the Spline canvas own pointer + touch gestures for orbit/zoom
         // without the browser hijacking them for page scroll.
         pointerEvents: "auto",

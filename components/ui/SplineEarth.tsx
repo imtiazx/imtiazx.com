@@ -16,6 +16,10 @@ const Spline = dynamic(() => import("@splinetool/react-spline"), {
 const SCENE_URL =
   "https://prod.spline.design/h2ff9MB-DMQigZfl/scene.splinecode?v=20260531";
 
+// Reveal guard: lets Spline's first-frame texture/material warm-up land
+// before we begin the fade-in, so the warm-up paints aren't visible.
+const REVEAL_GUARD_MS = 120;
+
 interface SplineEarthProps {
   className?: string;
 }
@@ -50,11 +54,13 @@ class SplineErrorBoundary extends Component<
 
 export function SplineEarth({ className }: SplineEarthProps) {
   const [canRender, setCanRender] = useState(false);
-  // Hides the wrapper until the scene background has been forced transparent,
-  // otherwise Spline's default scene BG flashes for ~1 frame.
+  // Hides the wrapper until the scene background has been forced transparent
+  // and the warm-up window has passed.
   const [loaded, setLoaded] = useState(false);
+  const wrapRef = useRef<HTMLDivElement | null>(null);
   const reducedMotionRef = useRef(false);
   const splineRef = useRef<Application | null>(null);
+  const playingRef = useRef(false);
 
   useEffect(() => {
     setCanRender(webglAvailable());
@@ -65,6 +71,7 @@ export function SplineEarth({ className }: SplineEarthProps) {
       reducedMotionRef.current = e.matches;
       if (e.matches && splineRef.current) {
         splineRef.current.stop();
+        playingRef.current = false;
       }
     };
     mq.addEventListener("change", onMotionChange);
@@ -74,12 +81,46 @@ export function SplineEarth({ className }: SplineEarthProps) {
     };
   }, []);
 
+  // Pause the WebGL render loop while Earth is offscreen. EarthSection already
+  // gates the mount itself behind `useInView`, so this layer mainly catches
+  // the case where the user scrolls past Earth into Footer.
+  useEffect(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    if (typeof IntersectionObserver === "undefined") return;
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const app = splineRef.current;
+          if (!app) continue;
+          if (entry.isIntersecting && !reducedMotionRef.current) {
+            if (!playingRef.current) {
+              app.play();
+              playingRef.current = true;
+            }
+          } else {
+            if (playingRef.current) {
+              app.stop();
+              playingRef.current = false;
+            }
+          }
+        }
+      },
+      { rootMargin: "100px" },
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   const handleLoad = (app: Application) => {
     splineRef.current = app;
     app.setBackgroundColor("rgba(0,0,0,0)");
-    requestAnimationFrame(() => setLoaded(true));
+    setTimeout(() => setLoaded(true), REVEAL_GUARD_MS);
     if (reducedMotionRef.current) {
       app.stop();
+      playingRef.current = false;
+    } else {
+      playingRef.current = true;
     }
   };
 
@@ -87,10 +128,11 @@ export function SplineEarth({ className }: SplineEarthProps) {
 
   return (
     <div
+      ref={wrapRef}
       className={className}
       style={{
         opacity: loaded ? 1 : 0,
-        transition: "opacity 0.5s ease",
+        transition: "opacity 500ms ease",
         pointerEvents: "auto",
         touchAction: "none",
       }}
