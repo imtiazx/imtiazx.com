@@ -12,6 +12,7 @@ import {
 } from "@/lib/crypto";
 import { person } from "@/lib/person";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { useInView } from "@/lib/useInView";
 
 const HEADING = "What I Track";
 const SUBTEXT =
@@ -192,6 +193,7 @@ function ParticleMesh() {
   const [tick, setTick] = useState(0);
   const rafRef = useRef<number | null>(null);
   const startRef = useRef<number>(0);
+  const [shellRef, inView] = useInView<HTMLDivElement>({ rootMargin: "200px" });
 
   // Drag bookkeeping. While an orbiter is being dragged, we *freeze* its
   // anchored position (so the dashed pendulum tether stays put and reads as
@@ -213,8 +215,13 @@ function ParticleMesh() {
 
   useEffect(() => {
     if (prefersReducedMotion) return;
+    if (!inView) return;
     let mounted = true;
-    startRef.current = performance.now();
+    // Anchor `tick` time to the moment the loop resumes so animation phases
+    // don't fast-forward across the gap when the section re-enters the
+    // viewport.
+    const resumeAt = performance.now() - tick;
+    startRef.current = resumeAt;
     const loop = (now: number) => {
       if (!mounted) return;
       setTick(now - startRef.current);
@@ -225,7 +232,10 @@ function ParticleMesh() {
       mounted = false;
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
     };
-  }, [prefersReducedMotion]);
+    // `tick` intentionally excluded from deps — we only want the resume
+    // anchor read once per inView flip, not every animation frame.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [prefersReducedMotion, inView]);
 
   const computeOrbital = (o: OrbitingIcon, t: number) => {
     const angle = o.baseAngle + t * o.speed;
@@ -298,6 +308,7 @@ function ParticleMesh() {
 
   return (
     <div
+      ref={shellRef}
       className="relative w-full"
       style={{
         aspectRatio: `${MESH_W} / ${MESH_H}`,

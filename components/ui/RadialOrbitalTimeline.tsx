@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { ArrowRight, Link2 } from "lucide-react";
+import { useInView } from "@/lib/useInView";
 
 export interface OrbitalItem {
   id: number;
@@ -33,7 +34,7 @@ export default function RadialOrbitalTimeline({ items }: RadialOrbitalTimelinePr
   // on every full cycle of the seal's CSS pulse so the rhythm stays in lockstep
   // with the visual the user already sees beating in the center.
   const [spotlightIdx, setSpotlightIdx] = useState(0);
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerRef, inView] = useInView<HTMLDivElement>({ rootMargin: "200px" });
   const orbitRef = useRef<HTMLDivElement>(null);
   const sealRef = useRef<HTMLDivElement>(null);
   const nodeRefs = useRef<Record<number, HTMLDivElement | null>>({});
@@ -87,22 +88,19 @@ export default function RadialOrbitalTimeline({ items }: RadialOrbitalTimelinePr
   };
 
   useEffect(() => {
-    let rotationTimer: ReturnType<typeof setInterval> | undefined;
-    if (autoRotate) {
-      rotationTimer = setInterval(() => {
-        setRotationAngle((prev) => Number(((prev + 0.3) % 360).toFixed(3)));
-      }, 50);
-    }
-    return () => {
-      if (rotationTimer) clearInterval(rotationTimer);
-    };
-  }, [autoRotate]);
+    if (!autoRotate || !inView) return;
+    const rotationTimer = setInterval(() => {
+      setRotationAngle((prev) => Number(((prev + 0.3) % 360).toFixed(3)));
+    }, 50);
+    return () => clearInterval(rotationTimer);
+  }, [autoRotate, inView]);
 
   // Advance the spotlight on every full cycle of the seal's CSS pulse. Using
   // animationiteration keeps the node glow and the seal glow phase-locked even
-  // if React's render cadence drifts. Pauses when a node is expanded.
+  // if React's render cadence drifts. Pauses when a node is expanded or when
+  // the section scrolls offscreen.
   useEffect(() => {
-    if (!autoRotate || activeNodeId !== null) return;
+    if (!autoRotate || activeNodeId !== null || !inView) return;
     const el = sealRef.current;
     if (!el) return;
     const onIter = () => {
@@ -110,7 +108,7 @@ export default function RadialOrbitalTimeline({ items }: RadialOrbitalTimelinePr
     };
     el.addEventListener("animationiteration", onIter);
     return () => el.removeEventListener("animationiteration", onIter);
-  }, [autoRotate, activeNodeId, items.length]);
+  }, [autoRotate, activeNodeId, items.length, inView]);
 
   // Responsive orbit radius: smaller on mobile so labels stay readable.
   const [radius, setRadius] = useState(260);

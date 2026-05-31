@@ -3,6 +3,7 @@
 import { Suspense, useEffect, useState } from "react";
 import { useReducedMotion } from "framer-motion";
 import { SplineEarth } from "@/components/ui/SplineEarth";
+import { useInView } from "@/lib/useInView";
 
 const actions = [
   "offset your cloud compute emissions.",
@@ -22,13 +23,14 @@ const actions = [
 // ----------------------------------------------------------------------------
 type TypewriterMode = "typing" | "pauseFull" | "deleting" | "pauseEmpty";
 
-function Typewriter({ reduced }: { reduced: boolean }) {
+function Typewriter({ reduced, active }: { reduced: boolean; active: boolean }) {
   const [actionIdx, setActionIdx] = useState(0);
   const [displayed, setDisplayed] = useState("");
   const [mode, setMode] = useState<TypewriterMode>("typing");
 
   useEffect(() => {
     if (reduced) return;
+    if (!active) return;
     const action = actions[actionIdx];
     let timeoutId: ReturnType<typeof setTimeout>;
 
@@ -57,7 +59,7 @@ function Typewriter({ reduced }: { reduced: boolean }) {
     }
 
     return () => clearTimeout(timeoutId);
-  }, [displayed, mode, actionIdx, reduced]);
+  }, [displayed, mode, actionIdx, reduced, active]);
 
   const shown = reduced ? actions[0] : displayed;
 
@@ -86,9 +88,14 @@ function Typewriter({ reduced }: { reduced: boolean }) {
 // ----------------------------------------------------------------------------
 export function EarthSection() {
   const prefersReducedMotion = useReducedMotion() ?? false;
+  // Mount + animate the heavy 3D scene and typewriter only when the section is
+  // near the viewport. `rootMargin: 100%` preloads it one screen in advance so
+  // the scene is ready by the time the user scrolls onto it.
+  const [sectionRef, inView] = useInView<HTMLElement>({ rootMargin: "100%" });
 
   return (
     <section
+      ref={sectionRef}
       id="earth"
       className="relative overflow-hidden"
     >
@@ -99,9 +106,11 @@ export function EarthSection() {
         className="relative w-full"
         style={{ height: "clamp(620px, 92vh, 960px)" }}
       >
-        <Suspense fallback={null}>
-          <SplineEarth className="absolute inset-0 w-full h-full" />
-        </Suspense>
+        {inView && (
+          <Suspense fallback={null}>
+            <SplineEarth className="absolute inset-0 w-full h-full" />
+          </Suspense>
+        )}
 
         {/* Bottom-centered overlay — lands on the dark lower hemisphere of
             the planet / dark space beneath it */}
@@ -121,7 +130,7 @@ export function EarthSection() {
             </div>
 
             <div className="mt-6 inline-block text-left">
-              <Typewriter reduced={prefersReducedMotion} />
+              <Typewriter reduced={prefersReducedMotion} active={inView} />
             </div>
           </div>
         </div>

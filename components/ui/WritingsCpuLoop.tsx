@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { Cpu } from "lucide-react";
+import { useInView } from "@/lib/useInView";
 
 export interface CpuLoopItem {
   id: string;
@@ -119,7 +120,7 @@ function buildTrace(pin: Pin, nx: number, ny: number) {
  * highlights its trace, and opens an expanded card.
  */
 export default function WritingsCpuLoop({ items }: WritingsCpuLoopProps) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const [containerRef, inView] = useInView<HTMLDivElement>({ rootMargin: "200px" });
   const loopRef = useRef<HTMLDivElement>(null);
   const sealRef = useRef<HTMLDivElement>(null);
   const [phase, setPhase] = useState(0);
@@ -145,18 +146,18 @@ export default function WritingsCpuLoop({ items }: WritingsCpuLoopProps) {
   }, []);
 
   useEffect(() => {
-    if (!autoRun) return;
+    if (!autoRun || !inView) return;
     const id = setInterval(() => {
       setPhase((p) => (p + 0.004) % (2 * Math.PI));
     }, 50);
     return () => clearInterval(id);
-  }, [autoRun]);
+  }, [autoRun, inView]);
 
   // Advance the spotlight on every full cycle of the CPU seal's pulse. Phase
   // locks node + chip glow without depending on a JS interval staying in sync
-  // with the CSS animation.
+  // with the CSS animation. Paused when the section scrolls offscreen.
   useEffect(() => {
-    if (!autoRun || activeId !== null) return;
+    if (!autoRun || activeId !== null || !inView) return;
     const el = sealRef.current;
     if (!el) return;
     const onIter = () => {
@@ -164,7 +165,7 @@ export default function WritingsCpuLoop({ items }: WritingsCpuLoopProps) {
     };
     el.addEventListener("animationiteration", onIter);
     return () => el.removeEventListener("animationiteration", onIter);
-  }, [autoRun, activeId, items.length]);
+  }, [autoRun, activeId, items.length, inView]);
 
   const handleContainerClick = (e: React.MouseEvent<HTMLDivElement>) => {
     if (e.target === containerRef.current || e.target === loopRef.current) {

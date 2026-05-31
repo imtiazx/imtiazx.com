@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useReducedMotion } from "framer-motion";
 import { Heart, MessageCircle, Repeat2 } from "lucide-react";
 import type { Opinion } from "@/lib/opinions";
+import { useInView } from "@/lib/useInView";
 
 export interface TweetStreamLoopProps {
   opinions: Opinion[];
@@ -241,7 +242,10 @@ export default function TweetStreamLoop({
   const [paused, setPaused] = useState(false);
   const [tick, setTick] = useState(0);
   const resumeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const shellRef = useRef<HTMLDivElement>(null);
+  // useInView gives us the shell ref + a flag we use to halt the cycle
+  // interval and unmount the always-running SVG <animateMotion> packets when
+  // the section scrolls offscreen.
+  const [shellRef, inView] = useInView<HTMLDivElement>({ rootMargin: "200px" });
   // Measured container width; null until the first resize callback fires so
   // we can render a safe SSR fallback instead of guessing the breakpoint.
   const [containerW, setContainerW] = useState<number | null>(null);
@@ -258,7 +262,7 @@ export default function TweetStreamLoop({
     const ro = new ResizeObserver(update);
     ro.observe(el);
     return () => ro.disconnect();
-  }, []);
+  }, [shellRef]);
 
   const geometry = useMemo<TrackGeometry>(
     () => computeGeometry(containerW ?? 1100),
@@ -274,13 +278,14 @@ export default function TweetStreamLoop({
 
   useEffect(() => {
     if (prefersReducedMotion) return;
+    if (!inView) return;
     const id = setInterval(() => {
       if (pausedRef.current) return;
       setHeadIdx((h) => (h + 1) % Math.max(opinions.length, 1));
       setTick((t) => t + 1);
     }, CYCLE_MS);
     return () => clearInterval(id);
-  }, [opinions.length, prefersReducedMotion]);
+  }, [opinions.length, prefersReducedMotion, inView]);
 
   useEffect(() => {
     return () => {
@@ -372,7 +377,11 @@ export default function TweetStreamLoop({
         overflow: "hidden",
       }}
     >
-      <PipelineVisual stacked={stacked} pipelineWidth={pipelineWidth} />
+      <PipelineVisual
+        stacked={stacked}
+        pipelineWidth={pipelineWidth}
+        animate={inView}
+      />
 
       {/* Bird-to-card wires drawn in shell pixel coords so the wire endpoints
           line up with the actual card slots regardless of breakpoint. */}
@@ -385,6 +394,7 @@ export default function TweetStreamLoop({
         trackLeft={trackLeft}
         cardWidth={cardWidth}
         visibleSlots={visibleSlots}
+        animate={inView}
       />
 
       {/* Card track: bottom-anchored so the bird-to-card wires have visible
@@ -477,9 +487,11 @@ const WIRE_B = `M ${LAPTOP_TR.x} ${LAPTOP_TR.y} L ${LAPTOP_TR.x} ${WIRE_B_MID_Y}
 function PipelineVisual({
   stacked = false,
   pipelineWidth,
+  animate,
 }: {
   stacked?: boolean;
   pipelineWidth: number;
+  animate: boolean;
 }) {
   const padding = stacked
     ? `${PIPE_PAD_STACKED.top}px ${PIPE_PAD_STACKED.right}px ${PIPE_PAD_STACKED.bottom}px ${PIPE_PAD_STACKED.left}px`
@@ -572,32 +584,37 @@ function PipelineVisual({
           {/* Animated data dots on each wire. Staggered begin times make the
               eye read one continuous packet flowing terminal -> laptop -> bird.
               Durations match BirdWires + the node-pulse cycle so the whole
-              section reads at one calm rhythm. */}
-          <circle
-            r={3.8}
-            fill="var(--color-brand)"
-            style={{
-              filter:
-                "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
-            }}
-          >
-            <animateMotion dur="5s" repeatCount="indefinite" path={WIRE_A} />
-          </circle>
-          <circle
-            r={3.8}
-            fill="var(--color-brand)"
-            style={{
-              filter:
-                "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
-            }}
-          >
-            <animateMotion
-              dur="5s"
-              begin="2.5s"
-              repeatCount="indefinite"
-              path={WIRE_B}
-            />
-          </circle>
+              section reads at one calm rhythm. Unmounted when offscreen so
+              SVG <animateMotion> isn't ticking constantly in the background. */}
+          {animate && (
+            <>
+              <circle
+                r={3.8}
+                fill="var(--color-brand)"
+                style={{
+                  filter:
+                    "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
+                }}
+              >
+                <animateMotion dur="5s" repeatCount="indefinite" path={WIRE_A} />
+              </circle>
+              <circle
+                r={3.8}
+                fill="var(--color-brand)"
+                style={{
+                  filter:
+                    "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
+                }}
+              >
+                <animateMotion
+                  dur="5s"
+                  begin="2.5s"
+                  repeatCount="indefinite"
+                  path={WIRE_B}
+                />
+              </circle>
+            </>
+          )}
         </svg>
 
         {/* Icon nodes overlaid on the stretched SVG. They use percentages of
@@ -897,6 +914,7 @@ interface BirdWiresProps {
   trackLeft: number;
   cardWidth: number;
   visibleSlots: number;
+  animate: boolean;
 }
 
 const BIRD_TO_CARD_DUR = 4.5;
@@ -925,6 +943,7 @@ function BirdWires({
   trackLeft,
   cardWidth,
   visibleSlots,
+  animate,
 }: BirdWiresProps) {
   const { trunkPath, drops, dotPaths } = useMemo(() => {
     const trunkStartX = birdX + BIRD_EDGE_OFFSET;
@@ -1008,25 +1027,27 @@ function BirdWires({
         </g>
       ))}
 
-      {/* Animated brand-orange data packets, one per destination card */}
-      {dotPaths.map((path, i) => (
-        <circle
-          key={`dot-${i}`}
-          r={3.6}
-          fill="var(--color-brand)"
-          style={{
-            filter:
-              "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
-          }}
-        >
-          <animateMotion
-            dur={`${BIRD_TO_CARD_DUR}s`}
-            begin={`${(i * BIRD_TO_CARD_STAGGER).toFixed(2)}s`}
-            repeatCount="indefinite"
-            path={path}
-          />
-        </circle>
-      ))}
+      {/* Animated brand-orange data packets, one per destination card.
+          Unmounted when offscreen so SVG <animateMotion> stops ticking. */}
+      {animate &&
+        dotPaths.map((path, i) => (
+          <circle
+            key={`dot-${i}`}
+            r={3.6}
+            fill="var(--color-brand)"
+            style={{
+              filter:
+                "drop-shadow(0 0 5px color-mix(in srgb, var(--color-brand) 85%, transparent))",
+            }}
+          >
+            <animateMotion
+              dur={`${BIRD_TO_CARD_DUR}s`}
+              begin={`${(i * BIRD_TO_CARD_STAGGER).toFixed(2)}s`}
+              repeatCount="indefinite"
+              path={path}
+            />
+          </circle>
+        ))}
     </svg>
   );
 }
