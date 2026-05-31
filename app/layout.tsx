@@ -70,7 +70,7 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className="antialiased mesh-texture">
+      <body className="antialiased">
         <ThemeProvider>
           <PageLoader />
           <ScrollProgress />

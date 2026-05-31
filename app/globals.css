@@ -94,12 +94,6 @@ body {
   transition: background-color var(--transition-slow), color var(--transition-slow);
 }
 
-/* Diagonal micro-texture -- barely visible on close inspection */
-.mesh-texture {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='40' height='40'%3E%3Cline x1='0' y1='40' x2='40' y2='0' stroke='rgba(234%2C88%2C12%2C0.03)' stroke-width='1'/%3E%3C/svg%3E");
-  background-repeat: repeat;
-}
-
 .container {
   width: 100%;
   max-width: var(--content-max-width);
@@ -107,26 +101,6 @@ body {
   margin-right: auto;
   padding-left: var(--content-padding);
   padding-right: var(--content-padding);
-}
-
-/* Scroll background symbol: hidden on mobile, visible md+ */
-.sb-symbol {
-  display: none;
-}
-@media (min-width: 768px) {
-  .sb-symbol {
-    display: block;
-  }
-}
-
-/* Symbol pop interaction */
-@keyframes symbolPop {
-  0%   { transform: scale(1)   translateY(0);      opacity: var(--symbol-opacity, 1); }
-  15%  { transform: scale(1.4) translateY(0);      opacity: var(--symbol-opacity, 1); }
-  100% { transform: scale(1)   translateY(-120px); opacity: 0; }
-}
-.symbol-pop {
-  animation: symbolPop 700ms ease-out forwards !important;
 }
 
 @layer utilities {
@@ -176,29 +150,17 @@ body {
   pointer-events: none;
 }
 
-/* Scroll background animations */
-@keyframes symbolFloat {
-  0%   { transform: translateY(0)    translateX(0)    rotate(0deg);  }
-  25%  { transform: translateY(-10px) translateX(5px)  rotate(10deg); }
-  50%  { transform: translateY(-4px)  translateX(-3px) rotate(-6deg); }
-  75%  { transform: translateY(7px)   translateX(3px)  rotate(14deg); }
-  100% { transform: translateY(0)    translateX(0)    rotate(0deg);  }
+/* Scroll background: zone cross-fade. ScrollBackground only mounts the
+   active zone (plus the outgoing zone during a fade), so we need explicit
+   keyframes here -- a CSS transition wouldn't fire because the outgoing
+   zone is freshly mounted. */
+@keyframes zoneFadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
-
-@keyframes nodePulse {
-  0%, 100% { transform: scale(1);   opacity: 0.10; }
-  50%       { transform: scale(1.4); opacity: 0.20; }
-}
-
-@keyframes linePulse {
-  0%, 100% { opacity: 0.03; }
-  50%       { opacity: 0.08; }
-}
-
-@keyframes sineDrift {
-  0%   { transform: translateX(0);    }
-  50%  { transform: translateX(-60px); }
-  100% { transform: translateX(0);    }
+@keyframes zoneFadeOut {
+  from { opacity: 1; }
+  to   { opacity: 0; }
 }
 
 /* Hackathons: pulsing LIVE dot */
