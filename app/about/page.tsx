@@ -327,7 +327,11 @@ function TimelineSection() {
     <section className="mt-24">
       <ScrollReveal variant="fadeUp">
         <h2
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+          }}
           className="text-3xl md:text-4xl mb-12"
         >
           Timeline
@@ -471,7 +475,11 @@ function RightNowSection() {
     <section className="mt-24">
       <ScrollReveal variant="fadeUp">
         <h2
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+          }}
           className="text-3xl md:text-4xl mb-8"
         >
           Right now
@@ -496,7 +504,11 @@ export default function AboutPage() {
     <main className="container py-20">
       <ScrollReveal variant="fadeUp">
         <h1
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+          }}
           className="text-4xl md:text-5xl lg:text-6xl"
         >
           About
