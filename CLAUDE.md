@@ -1,4 +1,4 @@
-# CLAUDE.md -- imtiazx.ai portfolio
+# CLAUDE.md -- imtiazx.com portfolio
 
 Read this file completely before touching any file in this repo.
 
@@ -8,7 +8,7 @@ Read this file completely before touching any file in this repo.
 
 Personal portfolio for Md Imtiaz Ahmed Mollah, preferred name: Imtiaz.
 Handle: imtiazx
-Domain: imtiazx.ai
+Domain: imtiazx.com
 Target audience: senior engineers and hiring managers at product companies.
 The site must feel premium, engineered, and intentional -- not like a template.
 
@@ -220,7 +220,7 @@ Never hardcode any of this data in components.
 
 ## Directory structure
 
-imtiazx.ai/
+imtiazx.com/
   CLAUDE.md
   package.json
   tailwind.config.ts
