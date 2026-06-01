@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
+import { SoundToggle } from "@/components/ui/SoundToggle";
 import { person } from "@/lib/person";
 
 const THEME_CYCLE: Theme[] = ["system", "light", "dark"];
@@ -96,6 +97,8 @@ export function Nav() {
               </li>
             )}
           </ul>
+
+          <SoundToggle />
 
           <button
             onClick={handleThemeToggle}

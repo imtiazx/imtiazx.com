@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sun, Moon, Monitor } from "lucide-react";
 import { useTheme, type Theme } from "@/components/providers/ThemeProvider";
+import { SoundToggle } from "@/components/ui/SoundToggle";
 import { SymbolCloud } from "@/components/intro/SymbolCloud";
 import { IntroLogo } from "@/components/intro/IntroLogo";
 
@@ -151,33 +152,46 @@ export function IntroScene() {
       <SymbolCloud theme={resolvedTheme} paused={leaving} />
       <IntroLogo />
 
-      <button
-        type="button"
-        onClick={handleThemeToggle}
-        aria-label={`Switch theme (current: ${theme})`}
-        className="intro-theme-toggle"
+      <div
         style={{
           position: "absolute",
           top: 16,
           right: 16,
           zIndex: 20,
-          width: 34,
-          height: 34,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          borderRadius: 9,
-          color: "var(--color-brand)",
-          background: "transparent",
-          borderWidth: 1,
-          borderStyle: "solid",
-          borderColor: "color-mix(in srgb, var(--color-brand) 28%, transparent)",
-          cursor: "pointer",
-          transition: "background-color 200ms ease",
+          gap: 8,
         }}
       >
-        <ThemeIcon theme={theme} />
-      </button>
+        <SoundToggle
+          variant="intro"
+          onClick={(e) => e.stopPropagation()}
+        />
+
+        <button
+          type="button"
+          onClick={handleThemeToggle}
+          aria-label={`Switch theme (current: ${theme})`}
+          className="intro-theme-toggle"
+          style={{
+            width: 34,
+            height: 34,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderRadius: 9,
+            color: "var(--color-brand)",
+            background: "transparent",
+            borderWidth: 1,
+            borderStyle: "solid",
+            borderColor: "color-mix(in srgb, var(--color-brand) 28%, transparent)",
+            cursor: "pointer",
+            transition: "background-color 200ms ease",
+          }}
+        >
+          <ThemeIcon theme={theme} />
+        </button>
+      </div>
 
       {showHint && (
         <div className="intro-loading-hint" aria-hidden>
