@@ -165,6 +165,7 @@ export function SplineBrain({ className }: SplineBrainProps) {
       className={className}
       onDoubleClick={resetCamera}
       style={{
+        position: "relative",
         opacity: loaded ? 1 : 0,
         transition: "opacity 350ms ease",
         // Let the Spline canvas own pointer + touch gestures for orbit/zoom
@@ -173,14 +174,47 @@ export function SplineBrain({ className }: SplineBrainProps) {
         touchAction: "none",
       }}
     >
-      <SplineErrorBoundary>
-        <Spline
-          key={sceneKey}
-          scene={SCENE_URL}
-          onLoad={handleLoad}
-          style={{ background: "transparent" }}
-        />
-      </SplineErrorBoundary>
+      {/* Ambient orange halo. Sits BEHIND the transparent Spline canvas, so
+          the brand color bleeds through wherever the brain mesh isn't drawing.
+          This is the "tint" without paying the cost of a CSS filter chain
+          over a live canvas (the earlier approach that caused lag). Only
+          opacity animates, which the compositor handles on the GPU. */}
+      <div
+        aria-hidden
+        className="spline-brain-halo"
+        style={{
+          position: "absolute",
+          inset: 0,
+          zIndex: 0,
+          pointerEvents: "none",
+          background:
+            "radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--color-brand) 22%, transparent) 0%, color-mix(in srgb, var(--color-brand) 8%, transparent) 38%, transparent 65%)",
+          willChange: "opacity",
+        }}
+      />
+      <div style={{ position: "relative", zIndex: 1, width: "100%", height: "100%" }}>
+        <SplineErrorBoundary>
+          <Spline
+            key={sceneKey}
+            scene={SCENE_URL}
+            onLoad={handleLoad}
+            style={{ background: "transparent" }}
+          />
+        </SplineErrorBoundary>
+      </div>
+
+      <style jsx>{`
+        .spline-brain-halo {
+          animation: splineBrainPulse 6.5s ease-in-out infinite;
+        }
+        @keyframes splineBrainPulse {
+          0%, 100% { opacity: 0.7; }
+          50%      { opacity: 1;   }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .spline-brain-halo { animation: none; opacity: 0.85; }
+        }
+      `}</style>
     </div>
   );
 }
