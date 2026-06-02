@@ -11,7 +11,7 @@ const Spline = dynamic(() => import("@splinetool/react-spline"), {
 });
 
 const SCENE_URL =
-  "https://prod.spline.design/9vLKae8a2HyRt6oH/scene.splinecode";
+  "https://prod.spline.design/HFbFwnHma55H77I2/scene.splinecode";
 
 // Spline OrbitControls autoRotateSpeed default is 2.0; 0.4 = slow drift.
 const AUTO_ROTATE_SPEED = 0.4;
