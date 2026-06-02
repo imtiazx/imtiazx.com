@@ -168,7 +168,7 @@ function BioSection() {
               style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-secondary)" }}
               className="text-base leading-relaxed mt-5"
             >
-              Originally from Bangladesh, currently building from wherever the work and the coffee
+              Originally from India, currently building from wherever the work and the coffee
               are good. He writes to think clearly, ships to learn faster, and treats every
               engagement as a chance to leave the system better documented than he found it.
             </p>
