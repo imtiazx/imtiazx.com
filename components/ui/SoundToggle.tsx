@@ -1,6 +1,6 @@
 "use client";
 
-import { Volume2, VolumeX, MousePointerClick } from "lucide-react";
+import { Music, VolumeX, Volume1 } from "lucide-react";
 import { useSound, type SoundMode } from "@/components/providers/SoundProvider";
 
 const LABEL: Record<SoundMode, string> = {
@@ -9,10 +9,15 @@ const LABEL: Record<SoundMode, string> = {
   full: "click + music",
 };
 
+// Keep every state inside the audio-icon family so the button itself reads as
+// a sound control at a glance, regardless of which mode is active.
+//   muted -> speaker with X     (off)
+//   click -> speaker, low bars  (minimal audio)
+//   full  -> music note         (music playing)
 function ModeIcon({ mode }: { mode: SoundMode }) {
   if (mode === "muted") return <VolumeX size={16} />;
-  if (mode === "click") return <MousePointerClick size={16} />;
-  return <Volume2 size={16} />;
+  if (mode === "click") return <Volume1 size={16} />;
+  return <Music size={16} />;
 }
 
 interface Props {
