@@ -10,6 +10,7 @@ import { PageTransition } from "@/components/layout/PageTransition";
 import { CustomCursor } from "@/components/ui/CustomCursor";
 import { PageLoader } from "@/components/ui/PageLoader";
 import { ScrollProgress } from "@/components/ui/ScrollProgress";
+import { DevNoticeBanner } from "@/components/ui/DevNoticeBanner";
 
 const dmSerifDisplay = DM_Serif_Display({
   subsets: ["latin"],
@@ -77,6 +78,7 @@ export default function RootLayout({
             <PageLoader />
             <ScrollProgress />
             <CustomCursor />
+            <DevNoticeBanner />
             <Nav />
             <PageTransition>{children}</PageTransition>
             <Footer />
