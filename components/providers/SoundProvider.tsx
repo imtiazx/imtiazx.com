@@ -40,7 +40,12 @@ function fadeTo(audio: HTMLAudioElement, target: number, ms: number) {
   const startTs = performance.now();
   const step = (now: number) => {
     const t = Math.min(1, (now - startTs) / ms);
-    audio.volume = start + (target - start) * t;
+    const v = start + (target - start) * t;
+    // HTMLMediaElement.volume rejects anything outside [0, 1]; floating-point
+    // drift at the tail of a fade (or rapid mode toggles that overlap two
+    // fades on the same element) can produce a sliver below 0, throwing
+    // IndexSizeError. Clamp defensively.
+    audio.volume = v < 0 ? 0 : v > 1 ? 1 : v;
     if (t < 1) requestAnimationFrame(step);
     else if (target === 0) audio.pause();
   };
@@ -54,11 +59,18 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   // The very first `setMode` from localStorage shouldn't try to start music
   // before the user has interacted with the page; browsers will block it.
   const hydratedRef = useRef(false);
+  // Synchronous mirror of `mode` so cycleMode can compute the next value
+  // without waiting for React to commit. Updated by cycleMode itself before
+  // calling setMode so rapid double-clicks chain through the cycle correctly.
+  const modeRef = useRef<SoundMode>(DEFAULT_MODE);
 
   useEffect(() => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY) as SoundMode | null;
-      if (stored && CYCLE.includes(stored)) setMode(stored);
+      if (stored && CYCLE.includes(stored)) {
+        setMode(stored);
+        modeRef.current = stored;
+      }
     } catch {}
     hydratedRef.current = true;
   }, []);
@@ -117,10 +129,15 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     };
 
     if (mode === "full") {
-      start();
-    } else if (!music.paused) {
-      fadeTo(music, 0, MUSIC_FADE_MS);
+      // cycleMode already kicks playback off inside the user-gesture stack
+      // frame (Safari needs that). Only re-attempt here for the initial-mount
+      // case: a returning visitor whose stored mode is already "full" but who
+      // hasn't clicked yet. start() then arms a retry on the first gesture.
+      if (music.paused) start();
     }
+    // No fade-out branch here on purpose. cycleMode owns the leaving-"full"
+    // transition synchronously; fading from here too would race two RAF loops
+    // on the same audio.volume and drift negative.
 
     return () => {
       cancelled = true;
@@ -152,14 +169,33 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   }, [mode]);
 
   const cycleMode = useCallback(() => {
-    setMode((prev) => {
-      const idx = CYCLE.indexOf(prev);
-      const next = CYCLE[(idx + 1) % CYCLE.length];
-      try {
-        localStorage.setItem(STORAGE_KEY, next);
-      } catch {}
-      return next;
-    });
+    const prev = modeRef.current;
+    const next = CYCLE[(CYCLE.indexOf(prev) + 1) % CYCLE.length];
+    modeRef.current = next;
+
+    try {
+      localStorage.setItem(STORAGE_KEY, next);
+    } catch {}
+
+    // Drive the audio synchronously inside the click handler. The mode-watcher
+    // effect runs after React commits, which is past the browser's transient
+    // user-activation window in Safari, so play() called from there silently
+    // fails. Doing it here is what actually unblocks music on the click that
+    // toggles into "full".
+    const music = musicRef.current;
+    if (music) {
+      if (next === "full" && music.paused) {
+        music.volume = 0;
+        music
+          .play()
+          .then(() => fadeTo(music, MUSIC_VOLUME, MUSIC_FADE_MS))
+          .catch(() => {});
+      } else if (next !== "full" && !music.paused) {
+        fadeTo(music, 0, MUSIC_FADE_MS);
+      }
+    }
+
+    setMode(next);
   }, []);
 
   return (

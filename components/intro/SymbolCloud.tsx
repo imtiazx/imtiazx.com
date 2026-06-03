@@ -366,6 +366,13 @@ export function SymbolCloud({ theme, paused = false }: SymbolCloudProps) {
     let cy = 0;
     let radius = 0; // word-sphere radius
     let clear = 0; // protected center zone for the logo
+    // Word font and cursor-glow radius are recomputed per layout pass so the
+    // cloud stays readable when the sphere shrinks on small viewports. With
+    // both held constant the 14" laptop case (radius ~208, clear 135) leaves
+    // only a ~73px-deep annulus to fit ~230 words at 14px, which overlaps
+    // badly on hover. See layout() for the clamp math.
+    let baseFont = BASE_FONT_PX;
+    let glowRadius = GLOW_RADIUS;
 
     let rotX = 0;
     let rotY = 0;
@@ -418,6 +425,13 @@ export function SymbolCloud({ theme, paused = false }: SymbolCloudProps) {
       const fitRadius = ((minDim / 2) * 0.94) / (1.02 * MAX_HALO_FACTOR);
       radius = Math.max(150, Math.min(minDim * 0.33, 380, fitRadius));
       clear = Math.max(135, radius * 0.42);
+      // Scale text and hover glow with the sphere. The clear zone has a hard
+      // floor to keep the central logo readable, so on small screens the
+      // available annulus is narrow; shrink the font so words still breathe
+      // there. Glow tightens too so hover lights up a focused group rather
+      // than the whole near-side.
+      baseFont = Math.max(9, Math.min(BASE_FONT_PX, radius * 0.04));
+      glowRadius = Math.min(GLOW_RADIUS, radius * 0.55);
     };
 
     // Event horizon sits just outside the word cloud circle. The accretion
@@ -616,12 +630,12 @@ export function SymbolCloud({ theme, paused = false }: SymbolCloudProps) {
           1 - smoothstep(radius * 0.94, radius * 1.06, distCenter) * 0.85;
 
         const alpha = (0.4 + d * 0.55) * centerFade * edgeFade;
-        const fontSize = BASE_FONT_PX * (0.72 + d * 0.6);
+        const fontSize = baseFont * (0.72 + d * 0.6);
 
         let glow = 0;
         if (hot) {
           const dm = Math.hypot(sx - pointerX, sy - pointerY);
-          if (dm < GLOW_RADIUS) glow = (1 - dm / GLOW_RADIUS) * energy;
+          if (dm < glowRadius) glow = (1 - dm / glowRadius) * energy;
         }
 
         ctx.font = `${fontSize.toFixed(1)}px ${mono}`;
