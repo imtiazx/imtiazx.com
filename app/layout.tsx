@@ -35,8 +35,8 @@ const jetbrainsMono = JetBrains_Mono({
 
 
 export const metadata: Metadata = {
-  title: "imtiazx",
-  description: "I engineer AI systems from prototype to production.",
+  title: "ImtiazX | Consciousness++",
+  description: "Exploring the space between human judgement and machine intelligence.",
 };
 
 export default function RootLayout({

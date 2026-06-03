@@ -5,87 +5,72 @@ import { useEffect, useMemo, useRef, useState } from "react";
 /**
  * BrainMesh
  *
- * Regular icosahedron wireframe (12 vertices, 30 edges, 5 edges per vertex)
- * that sits over the SplineBrain in the hero. Yaws clockwise around the Y
- * axis with a fixed X tilt so the rotation reads as a slow 3D spin. Each
- * node carries an independent spring offset — drag a node and it stretches
- * away from its rest position; release and damped Hooke physics pulls it
- * back.
+ * Two coplanar polygon rings drawn around the SplineBrain in the hero.
+ * Both rings live on the screen plane (no 3D tilt), rotating clockwise at
+ * different angular speeds. Neither ring's vertices or edges cross the
+ * brain's visible silhouette, and the rings stay clear of each other.
+ * Spokes link each outer vertex back to a fixed partner on the inner ring,
+ * so as the rings phase out of sync the spokes form a slow churning weave.
  *
- * Pointer-events are scoped to the per-node hit circles only, so the
- * SplineBrain underneath still receives orbit-control gestures everywhere
- * else.
+ * Interactions:
+ *   1. Drag a node: it stretches away from its rest position on the ring,
+ *      driven by the pointer. Release and damped Hooke physics pulls it
+ *      back along the moving rest position.
+ *   2. Drag a polygon edge: that ring follows the pointer like a steering
+ *      wheel. On release, the recent angular velocity becomes the ring's
+ *      momentary spin speed and exponentially decays back to its baseline
+ *      rotation. Spokes are not draggable (they belong to two rings).
+ *
+ * Pointer-events are scoped to the per-node hit circles and the per-edge
+ * hit lines, so the SplineBrain underneath still receives orbit-control
+ * gestures everywhere else.
  */
 
-const ROTATION_SPEED = 0.18;     // rad/s yaw
-const TILT_X = 0.32;             // static lean so the spin reads 3D
-const MESH_FACTOR = 0.48;        // sphere radius as a fraction of min(w, h).
-                                 // Sized so the equator lands outside the
-                                 // brain's visible silhouette in the hero
-                                 // column.
-const SPRING_K = 240;            // Hooke stiffness
-const SPRING_DAMPING = 22;       // damping coefficient
-const NODE_R = 4.2;
-const HIT_R = 14;                // generous tap target; transparent
+const INNER_COUNT = 6;
+const OUTER_COUNT = 12;
 
-interface Vec3 { x: number; y: number; z: number; }
+// rad/s, positive = clockwise in SVG (y-down) coordinates.
+const INNER_ROTATION = 0.12;
+const OUTER_ROTATION = 0.05;
+
+// Ring radii as a fraction of min(w, h). Outer is capped under 0.5 so the
+// ring (plus its nodes) always fits inside the hero column horizontally;
+// inner is pulled in just enough to clear the brain silhouette while
+// leaving a clear gap between the two rings.
+const INNER_RADIUS_FACTOR = 0.36;
+const OUTER_RADIUS_FACTOR = 0.46;
+
+const SPRING_K = 240;
+const SPRING_DAMPING = 22;
+const NODE_R = 4.2;
+const HIT_R = 14;
+
+// Fat invisible band along each polygon edge for grabbing. 16px is wide
+// enough to catch a fingertip on touch without crowding the brain canvas.
+const EDGE_HIT_WIDTH = 16;
+
+// How quickly a ring's perturbed angular velocity relaxes back to its
+// baseline after a fling. Higher = snappier return. 1.6/s settles in
+// roughly 2 seconds for typical fling magnitudes.
+const ANG_VEL_DECAY = 1.6;
+
+// Cap on the angular velocity a single fling can impart, so a violent
+// drag does not send the ring into a long uncontrolled spin.
+const MAX_FLING_ANG_VEL = 8;
+
 interface V2 { x: number; y: number; }
 
-/**
- * Regular icosahedron with vertices on the unit sphere. 12 vertices, 30
- * edges; every vertex has exactly 5 incident edges. The edge list is built
- * by selecting all vertex pairs whose pairwise distance matches the minimum
- * (the icosahedron's edge length).
- */
-function icosahedron(): { vertices: Vec3[]; edges: [number, number][] } {
-  const phi = (1 + Math.sqrt(5)) / 2;
-  const raw: [number, number, number][] = [
-    [ 0,  1,  phi], [ 0,  1, -phi],
-    [ 0, -1,  phi], [ 0, -1, -phi],
-    [ 1,  phi,  0], [ 1, -phi,  0],
-    [-1,  phi,  0], [-1, -phi,  0],
-    [ phi,  0,  1], [ phi,  0, -1],
-    [-phi,  0,  1], [-phi,  0, -1],
-  ];
-  const norm = Math.sqrt(1 + phi * phi);
-  const vertices: Vec3[] = raw.map(([x, y, z]) => ({
-    x: x / norm,
-    y: y / norm,
-    z: z / norm,
-  }));
+type RingId = "inner" | "outer";
+type EdgeKind = RingId | "spoke";
+interface NodeSpec { ring: RingId; baseAngle: number; }
+interface EdgeSpec { a: number; b: number; kind: EdgeKind; }
 
-  let minDist = Infinity;
-  for (let i = 0; i < vertices.length; i++) {
-    for (let j = i + 1; j < vertices.length; j++) {
-      const dx = vertices[i].x - vertices[j].x;
-      const dy = vertices[i].y - vertices[j].y;
-      const dz = vertices[i].z - vertices[j].z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (d < minDist) minDist = d;
-    }
-  }
-
-  const EPS = 1e-3;
-  const edges: [number, number][] = [];
-  for (let i = 0; i < vertices.length; i++) {
-    for (let j = i + 1; j < vertices.length; j++) {
-      const dx = vertices[i].x - vertices[j].x;
-      const dy = vertices[i].y - vertices[j].y;
-      const dz = vertices[i].z - vertices[j].z;
-      const d = Math.sqrt(dx * dx + dy * dy + dz * dz);
-      if (Math.abs(d - minDist) < EPS) edges.push([i, j]);
-    }
-  }
-  return { vertices, edges };
-}
-
-function rotateY(p: Vec3, a: number): Vec3 {
-  const c = Math.cos(a), s = Math.sin(a);
-  return { x: p.x * c + p.z * s, y: p.y, z: -p.x * s + p.z * c };
-}
-function rotateX(p: Vec3, a: number): Vec3 {
-  const c = Math.cos(a), s = Math.sin(a);
-  return { x: p.x, y: p.y * c - p.z * s, z: p.y * s + p.z * c };
+interface EdgeDragState {
+  ring: RingId;
+  pointerId: number;
+  lastAngle: number;     // pointer angle relative to ring center, last sample
+  lastT: number;         // last sample time (ms, DOMHighResTimeStamp)
+  recentAngVel: number;  // most recent angular velocity in rad/s
 }
 
 interface BrainMeshProps {
@@ -96,18 +81,65 @@ export function BrainMesh({ className }: BrainMeshProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState({ w: 0, h: 0 });
 
-  // Geometry is constant — build it once at module load via useMemo so we
-  // don't redo the O(n²) edge search on every render.
-  const { vertices: rest, edges } = useMemo(() => icosahedron(), []);
+  // Geometry is constant. Inner ring first, then outer, so node indices
+  // partition cleanly. The outer ring is offset by half a sector so its
+  // vertices sit between inner ones at t = 0; the silhouette reads more
+  // interesting than radially aligned vertices.
+  const { nodes, edges } = useMemo(() => {
+    const list: NodeSpec[] = [];
+    for (let i = 0; i < INNER_COUNT; i++) {
+      list.push({
+        ring: "inner",
+        baseAngle: (i / INNER_COUNT) * Math.PI * 2,
+      });
+    }
+    const outerOffset = (Math.PI * 2) / OUTER_COUNT / 2;
+    for (let j = 0; j < OUTER_COUNT; j++) {
+      list.push({
+        ring: "outer",
+        baseAngle: (j / OUTER_COUNT) * Math.PI * 2 + outerOffset,
+      });
+    }
 
-  const offsetsRef = useRef<V2[]>(rest.map(() => ({ x: 0, y: 0 })));
-  const velocitiesRef = useRef<V2[]>(rest.map(() => ({ x: 0, y: 0 })));
-  const yawRef = useRef(0);
-  const dragRef = useRef<{ nodeIdx: number; pointerId: number } | null>(null);
+    const innerStart = 0;
+    const outerStart = INNER_COUNT;
+    const e: EdgeSpec[] = [];
+
+    for (let i = 0; i < INNER_COUNT; i++) {
+      e.push({
+        a: innerStart + i,
+        b: innerStart + ((i + 1) % INNER_COUNT),
+        kind: "inner",
+      });
+    }
+    for (let j = 0; j < OUTER_COUNT; j++) {
+      e.push({
+        a: outerStart + j,
+        b: outerStart + ((j + 1) % OUTER_COUNT),
+        kind: "outer",
+      });
+    }
+    // Spokes: each outer vertex partners with the inner vertex at its
+    // proportional angular slot. With OUTER_COUNT = 2 * INNER_COUNT every
+    // inner vertex gets exactly two spokes.
+    for (let j = 0; j < OUTER_COUNT; j++) {
+      const partner = Math.floor((j * INNER_COUNT) / OUTER_COUNT);
+      e.push({ a: outerStart + j, b: innerStart + partner, kind: "spoke" });
+    }
+    return { nodes: list, edges: e };
+  }, []);
+
+  const offsetsRef = useRef<V2[]>(nodes.map(() => ({ x: 0, y: 0 })));
+  const velocitiesRef = useRef<V2[]>(nodes.map(() => ({ x: 0, y: 0 })));
+  const yawInnerRef = useRef(0);
+  const yawOuterRef = useRef(0);
+  // Current angular velocity per ring. Defaults to the baseline; an edge
+  // fling overwrites it, then ANG_VEL_DECAY pulls it back to baseline.
+  const angVelInnerRef = useRef(INNER_ROTATION);
+  const angVelOuterRef = useRef(OUTER_ROTATION);
+  const nodeDragRef = useRef<{ nodeIdx: number; pointerId: number } | null>(null);
+  const edgeDragRef = useRef<EdgeDragState | null>(null);
   const reducedRef = useRef(false);
-  // Tick state forces a re-render per RAF frame. With 12 nodes + 30 edges
-  // the reconciliation is cheap; direct DOM attribute writes would be
-  // faster but aren't worth the ugliness at this scale.
   const [, forceRender] = useState(0);
 
   useEffect(() => {
@@ -116,7 +148,6 @@ export function BrainMesh({ className }: BrainMeshProps) {
     ).matches;
   }, []);
 
-  // Resize tracking — drives the sphere screen radius.
   useEffect(() => {
     const el = rootRef.current;
     if (!el) return;
@@ -131,30 +162,39 @@ export function BrainMesh({ className }: BrainMeshProps) {
     return () => ro.disconnect();
   }, []);
 
-  // Main RAF loop. Steps:
-  //  1. advance yaw (unless dragging or reduced motion)
-  //  2. integrate spring physics on each node's offset
-  //  3. trigger React render
+  // Main RAF loop:
+  //   1. advance both ring yaws by their current angular velocity, and
+  //      relax that velocity back to baseline (skipped while an edge drag
+  //      is actively steering, since the handler updates yaw directly).
+  //   2. integrate spring physics on every node offset.
+  //   3. trigger React render.
   useEffect(() => {
     let raf = 0;
     let last = performance.now();
 
     const tick = (now: number) => {
-      const dt = Math.min(0.05, (now - last) / 1000); // clamp tab-blur jumps
+      const dt = Math.min(0.05, (now - last) / 1000);
       last = now;
 
-      if (!dragRef.current && !reducedRef.current) {
-        yawRef.current = (yawRef.current + ROTATION_SPEED * dt) % (Math.PI * 2);
+      if (!reducedRef.current && !edgeDragRef.current) {
+        yawInnerRef.current =
+          (yawInnerRef.current + angVelInnerRef.current * dt) % (Math.PI * 2);
+        yawOuterRef.current =
+          (yawOuterRef.current + angVelOuterRef.current * dt) % (Math.PI * 2);
+        // Exponential pull back to baseline rotation.
+        angVelInnerRef.current +=
+          (INNER_ROTATION - angVelInnerRef.current) * ANG_VEL_DECAY * dt;
+        angVelOuterRef.current +=
+          (OUTER_ROTATION - angVelOuterRef.current) * ANG_VEL_DECAY * dt;
       }
 
       const offsets = offsetsRef.current;
       const velocities = velocitiesRef.current;
-      const drag = dragRef.current;
+      const drag = nodeDragRef.current;
       for (let i = 0; i < offsets.length; i++) {
-        if (drag && drag.nodeIdx === i) continue; // dragged node is driven by pointer
+        if (drag && drag.nodeIdx === i) continue;
         const o = offsets[i];
         const v = velocities[i];
-        // Damped harmonic oscillator: a = -k*x - c*v
         const ax = -SPRING_K * o.x - SPRING_DAMPING * v.x;
         const ay = -SPRING_K * o.y - SPRING_DAMPING * v.y;
         v.x += ax * dt;
@@ -170,32 +210,34 @@ export function BrainMesh({ className }: BrainMeshProps) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  // ── Pointer / drag handlers ────────────────────────────────────────────
-  // setPointerCapture on the hit circle so pointermove/up keep routing back
-  // to it even when the pointer drifts off the visible area.
+  const radiusFor = (ring: RingId, minDim: number) =>
+    minDim *
+    (ring === "inner" ? INNER_RADIUS_FACTOR : OUTER_RADIUS_FACTOR);
+  const yawFor = (ring: RingId) =>
+    ring === "inner" ? yawInnerRef.current : yawOuterRef.current;
 
   const computeRestScreen = (nodeIdx: number, rect: DOMRect) => {
-    const p = rest[nodeIdx];
-    const yawed = rotateY(p, yawRef.current);
-    const tilted = rotateX(yawed, TILT_X);
-    const R = Math.min(rect.width, rect.height) * MESH_FACTOR;
+    const n = nodes[nodeIdx];
+    const r = radiusFor(n.ring, Math.min(rect.width, rect.height));
+    const a = n.baseAngle + yawFor(n.ring);
     return {
-      x: rect.width / 2 + tilted.x * R,
-      y: rect.height / 2 + tilted.y * R,
+      x: rect.width / 2 + Math.cos(a) * r,
+      y: rect.height / 2 + Math.sin(a) * r,
     };
   };
 
-  const handlePointerDown = (
+  // ── Node drag handlers ────────────────────────────────────────────────
+  const handleNodePointerDown = (
     e: React.PointerEvent<SVGCircleElement>,
     nodeIdx: number,
   ) => {
     e.stopPropagation();
     e.currentTarget.setPointerCapture(e.pointerId);
-    dragRef.current = { nodeIdx, pointerId: e.pointerId };
+    nodeDragRef.current = { nodeIdx, pointerId: e.pointerId };
   };
 
-  const handlePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
-    const drag = dragRef.current;
+  const handleNodePointerMove = (e: React.PointerEvent<SVGCircleElement>) => {
+    const drag = nodeDragRef.current;
     if (!drag || drag.pointerId !== e.pointerId) return;
     const root = rootRef.current;
     if (!root) return;
@@ -207,23 +249,88 @@ export function BrainMesh({ className }: BrainMeshProps) {
     const target = { x: px - restScreen.x, y: py - restScreen.y };
     const offset = offsetsRef.current[drag.nodeIdx];
     const velocity = velocitiesRef.current[drag.nodeIdx];
-
     // Synthesize velocity from offset delta so release flicks register as
-    // momentum. Assumes ~60fps; if the actual rate differs the spring
-    // damps it out in a few extra frames.
+    // momentum.
     velocity.x = (target.x - offset.x) * 60;
     velocity.y = (target.y - offset.y) * 60;
     offset.x = target.x;
     offset.y = target.y;
   };
 
-  const handlePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
-    if (dragRef.current?.pointerId === e.pointerId) {
-      dragRef.current = null;
+  const handleNodePointerUp = (e: React.PointerEvent<SVGCircleElement>) => {
+    if (nodeDragRef.current?.pointerId === e.pointerId) {
+      nodeDragRef.current = null;
     }
   };
 
-  // ── Render ─────────────────────────────────────────────────────────────
+  // ── Edge drag handlers ────────────────────────────────────────────────
+  const angleFromCenter = (px: number, py: number, rect: DOMRect) =>
+    Math.atan2(py - rect.height / 2, px - rect.width / 2);
+
+  const handleEdgePointerDown = (
+    e: React.PointerEvent<SVGLineElement>,
+    ring: RingId,
+  ) => {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture(e.pointerId);
+    const root = rootRef.current;
+    if (!root) return;
+    const rect = root.getBoundingClientRect();
+    edgeDragRef.current = {
+      ring,
+      pointerId: e.pointerId,
+      lastAngle: angleFromCenter(
+        e.clientX - rect.left,
+        e.clientY - rect.top,
+        rect,
+      ),
+      lastT: e.timeStamp,
+      recentAngVel: 0,
+    };
+  };
+
+  const handleEdgePointerMove = (e: React.PointerEvent<SVGLineElement>) => {
+    const drag = edgeDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const root = rootRef.current;
+    if (!root) return;
+    const rect = root.getBoundingClientRect();
+    const newAngle = angleFromCenter(
+      e.clientX - rect.left,
+      e.clientY - rect.top,
+      rect,
+    );
+    let dAngle = newAngle - drag.lastAngle;
+    // Unwrap the ±π discontinuity so dragging across the +x axis still
+    // produces a small signed delta.
+    if (dAngle > Math.PI) dAngle -= Math.PI * 2;
+    else if (dAngle < -Math.PI) dAngle += Math.PI * 2;
+    const dtMs = Math.max(1, e.timeStamp - drag.lastT);
+    const angVel = (dAngle / dtMs) * 1000; // rad/s
+
+    if (drag.ring === "inner") {
+      yawInnerRef.current = yawInnerRef.current + dAngle;
+    } else {
+      yawOuterRef.current = yawOuterRef.current + dAngle;
+    }
+    drag.lastAngle = newAngle;
+    drag.lastT = e.timeStamp;
+    drag.recentAngVel = angVel;
+  };
+
+  const handleEdgePointerUp = (e: React.PointerEvent<SVGLineElement>) => {
+    const drag = edgeDragRef.current;
+    if (!drag || drag.pointerId !== e.pointerId) return;
+    const v = Math.max(
+      -MAX_FLING_ANG_VEL,
+      Math.min(MAX_FLING_ANG_VEL, drag.recentAngVel),
+    );
+    if (drag.ring === "inner") angVelInnerRef.current = v;
+    else angVelOuterRef.current = v;
+    edgeDragRef.current = null;
+  };
+
+  // ── Render ────────────────────────────────────────────────────────────
   const { w, h } = size;
   if (w === 0 || h === 0) {
     return <div ref={rootRef} className={className} />;
@@ -231,26 +338,18 @@ export function BrainMesh({ className }: BrainMeshProps) {
 
   const cx = w / 2;
   const cy = h / 2;
-  const R = Math.min(w, h) * MESH_FACTOR;
-  const yaw = yawRef.current;
+  const minDim = Math.min(w, h);
 
-  // Project each node: yaw around Y, tilt around X, keep z for depth cues.
-  const projected = rest.map((p, i) => {
-    const yawed = rotateY(p, yaw);
-    const tilted = rotateX(yawed, TILT_X);
+  const projected = nodes.map((n, i) => {
+    const r = radiusFor(n.ring, minDim);
+    const a = n.baseAngle + yawFor(n.ring);
     const offset = offsetsRef.current[i] ?? { x: 0, y: 0 };
     return {
-      x: cx + tilted.x * R + offset.x,
-      y: cy + tilted.y * R + offset.y,
-      z: tilted.z, // -1 (back) .. +1 (front)
+      x: cx + Math.cos(a) * r + offset.x,
+      y: cy + Math.sin(a) * r + offset.y,
+      ring: n.ring,
     };
   });
-
-  // Render nodes back-to-front so front faces overlap the back.
-  const renderOrder = projected
-    .map((p, i) => ({ i, z: p.z }))
-    .sort((a, b) => a.z - b.z)
-    .map((o) => o.i);
 
   return (
     <div
@@ -264,46 +363,70 @@ export function BrainMesh({ className }: BrainMeshProps) {
         height="100%"
         style={{ position: "absolute", inset: 0, overflow: "visible" }}
       >
-        {/* Edges — drawn first so nodes sit on top. Opacity tracks the edge's
-            average z so back edges read slightly fainter, giving the wireframe
-            its depth. */}
-        {edges.map(([a, b], i) => {
+        {edges.map(({ a, b, kind }, i) => {
           const pa = projected[a];
           const pb = projected[b];
-          const avgZ = (pa.z + pb.z) / 2;
-          const depthAlpha = 0.20 + ((avgZ + 1) / 2) * 0.30;
+          const isSpoke = kind === "spoke";
+          const alpha = isSpoke ? 22 : 38;
           return (
             <line
-              key={i}
+              key={`edge-${i}`}
               x1={pa.x}
               y1={pa.y}
               x2={pb.x}
               y2={pb.y}
-              stroke={`color-mix(in srgb, var(--color-text-muted) ${Math.round(
-                depthAlpha * 100,
-              )}%, transparent)`}
+              stroke={`color-mix(in srgb, var(--color-text-muted) ${alpha}%, transparent)`}
               strokeWidth={1}
+              pointerEvents="none"
             />
           );
         })}
 
-        {/* Nodes — depth-sorted, with generous transparent hit targets. */}
-        {renderOrder.map((i) => {
-          const p = projected[i];
-          const dragged = dragRef.current?.nodeIdx === i;
-          // Back face slightly smaller + dimmer for a parallax cue.
-          const depthFactor = 0.7 + ((p.z + 1) / 2) * 0.55;
-          const r = NODE_R * depthFactor + (dragged ? 1.6 : 0);
+        {/* Polygon-edge hit lines. Spokes span two rings rotating at
+            different speeds, so a single angular fling on them would be
+            ambiguous; they are intentionally inert. */}
+        {edges.map(({ a, b, kind }, i) => {
+          if (kind === "spoke") return null;
+          const pa = projected[a];
+          const pb = projected[b];
+          const ring = kind as RingId;
+          const dragging = edgeDragRef.current?.ring === ring;
+          return (
+            <line
+              key={`hit-edge-${i}`}
+              x1={pa.x}
+              y1={pa.y}
+              x2={pb.x}
+              y2={pb.y}
+              stroke="transparent"
+              strokeWidth={EDGE_HIT_WIDTH}
+              strokeLinecap="round"
+              style={{
+                pointerEvents: "stroke",
+                cursor: dragging ? "grabbing" : "grab",
+                touchAction: "none",
+              }}
+              onPointerDown={(e) => handleEdgePointerDown(e, ring)}
+              onPointerMove={handleEdgePointerMove}
+              onPointerUp={handleEdgePointerUp}
+              onPointerCancel={handleEdgePointerUp}
+            />
+          );
+        })}
+
+        {projected.map((p, i) => {
+          const dragged = nodeDragRef.current?.nodeIdx === i;
+          const sizeFactor = p.ring === "inner" ? 1.0 : 0.85;
+          const r = NODE_R * sizeFactor + (dragged ? 1.6 : 0);
+          const fillAlpha = p.ring === "inner" ? 65 : 52;
           const fill = dragged
             ? "var(--color-brand)"
-            : `color-mix(in srgb, var(--color-text-primary) ${Math.round(
-                45 + depthFactor * 30,
-              )}%, transparent)`;
+            : `color-mix(in srgb, var(--color-text-primary) ${fillAlpha}%, transparent)`;
           const filter = dragged
             ? "drop-shadow(0 0 10px var(--color-brand))"
             : undefined;
           return (
-            <g key={i}>
+            <g key={`node-${i}`}>
               <circle
                 cx={p.x}
                 cy={p.y}
@@ -315,7 +438,6 @@ export function BrainMesh({ className }: BrainMeshProps) {
                   pointerEvents: "none",
                 }}
               />
-              {/* Invisible hit target — large enough to grab comfortably. */}
               <circle
                 cx={p.x}
                 cy={p.y}
@@ -326,10 +448,10 @@ export function BrainMesh({ className }: BrainMeshProps) {
                   cursor: dragged ? "grabbing" : "grab",
                   touchAction: "none",
                 }}
-                onPointerDown={(e) => handlePointerDown(e, i)}
-                onPointerMove={handlePointerMove}
-                onPointerUp={handlePointerUp}
-                onPointerCancel={handlePointerUp}
+                onPointerDown={(e) => handleNodePointerDown(e, i)}
+                onPointerMove={handleNodePointerMove}
+                onPointerUp={handleNodePointerUp}
+                onPointerCancel={handleNodePointerUp}
               />
             </g>
           );
