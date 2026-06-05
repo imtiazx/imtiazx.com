@@ -40,10 +40,10 @@ export const projects: Project[] = [
       docs: "https://github.com/imtiazx/ragscope/blob/main/docs/RAGScope_Reference.pdf",
     },
     showcaseImages: [
-      "/projects/ragscope/01-overview.webp",
-      "/projects/ragscope/02-strategies.webp",
-      "/projects/ragscope/03-metrics.webp",
-      "/projects/ragscope/04-report.webp",
+      "/projects/ragscope/01-overview.jpg",
+      "/projects/ragscope/02-strategies.jpg",
+      "/projects/ragscope/03-metrics.jpg",
+      "/projects/ragscope/04-chat.jpg",
     ],
   },
   {

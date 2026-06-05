@@ -160,7 +160,6 @@ export function ProjectCard({ project }: ProjectCardProps) {
         title={project.title}
         tagline={project.subtitle}
         description={project.description}
-        tags={project.tags}
         images={project.showcaseImages!}
       />
     )}

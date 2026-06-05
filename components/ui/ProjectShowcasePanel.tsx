@@ -17,12 +17,12 @@ interface ProjectShowcasePanelProps {
   title: string;
   tagline: string;
   description: string;
-  tags: string[];
   images: string[];
 }
 
-const PANEL_W = 420;
-const PANEL_H = 300;
+const PANEL_W = 440;
+const PANEL_H = 380;
+const IMAGE_H = 190;
 const CURSOR_OFFSET_X = 28;
 const CURSOR_OFFSET_Y = 28;
 const SLIDE_MS = 2500;
@@ -34,7 +34,6 @@ export function ProjectShowcasePanel({
   title,
   tagline,
   description,
-  tags,
   images,
 }: ProjectShowcasePanelProps) {
   const prefersReducedMotion = useReducedMotion();
@@ -110,106 +109,114 @@ export function ProjectShowcasePanel({
         transition: "opacity 220ms cubic-bezier(0.22, 1, 0.36, 1)",
         borderRadius: 16,
         overflow: "hidden",
+        backgroundColor: "var(--color-surface)",
+        border: "1px solid var(--color-border)",
         boxShadow:
-          "0 28px 60px rgba(0,0,0,0.42), 0 0 0 1px rgba(255,255,255,0.06)",
+          "0 28px 60px rgba(0, 0, 0, 0.22), 0 10px 24px rgba(0, 0, 0, 0.12)",
         willChange: "transform, opacity",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Fallback gradient — visible until images load or if any 404. */}
+      {/* Image area — top portion. Holds the crossfading stack. */}
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(135deg, var(--color-brand-light) 0%, #0c0c0e 100%)",
+          position: "relative",
+          width: "100%",
+          height: IMAGE_H,
+          flexShrink: 0,
+          overflow: "hidden",
+          backgroundColor: "var(--color-surface-alt)",
         }}
-      />
-
-      {/* Stacked images, opacity-driven crossfade with subtle zoom. Plain
-          <img> on purpose: 4 small panel images, all preloaded for instant
-          crossfade — next/image's optimization machinery adds no value here. */}
-      {images.map((src, i) => (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          key={src}
-          src={src}
-          alt=""
-          loading="eager"
-          decoding="async"
-          style={{
-            position: "absolute",
-            inset: 0,
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            opacity: i === slide ? 1 : 0,
-            transform: i === slide ? "scale(1)" : "scale(1.05)",
-            transition:
-              "opacity 700ms cubic-bezier(0.4, 0, 0.2, 1), transform 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
-          }}
-        />
-      ))}
-
-      {/* Readability gradient for text bottom-half. */}
-      <div
-        style={{
-          position: "absolute",
-          inset: 0,
-          background:
-            "linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.18) 38%, rgba(0,0,0,0.82) 100%)",
-        }}
-      />
-
-      {/* Slide indicator dots. */}
-      {images.length > 1 && (
+      >
+        {/* Fallback gradient behind images (visible if any image 404s). */}
         <div
           style={{
             position: "absolute",
-            top: 14,
-            right: 16,
-            display: "flex",
-            gap: 6,
-            zIndex: 2,
+            inset: 0,
+            background:
+              "linear-gradient(135deg, var(--color-brand-light) 0%, var(--color-surface-alt) 100%)",
           }}
-        >
-          {images.map((src, i) => (
-            <span
-              key={src}
-              style={{
-                width: 5,
-                height: 5,
-                borderRadius: 9999,
-                backgroundColor:
-                  i === slide
-                    ? "var(--color-brand)"
-                    : "rgba(255,255,255,0.35)",
-                transition: "background-color 240ms ease-out",
-              }}
-            />
-          ))}
-        </div>
-      )}
+        />
 
-      {/* Copy block. */}
+        {/* Stacked images, opacity-driven crossfade with subtle zoom. Plain
+            <img> on purpose: 4 small panel images, all preloaded for instant
+            crossfade — next/image's optimization machinery adds no value here. */}
+        {images.map((src, i) => (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            key={src}
+            src={src}
+            alt=""
+            loading="eager"
+            decoding="async"
+            style={{
+              position: "absolute",
+              inset: 0,
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              opacity: i === slide ? 1 : 0,
+              transform: i === slide ? "scale(1)" : "scale(1.05)",
+              transition:
+                "opacity 700ms cubic-bezier(0.4, 0, 0.2, 1), transform 1600ms cubic-bezier(0.22, 1, 0.36, 1)",
+            }}
+          />
+        ))}
+
+        {/* Slide indicator dots, dark pill backdrop for legibility on any image. */}
+        {images.length > 1 && (
+          <div
+            style={{
+              position: "absolute",
+              top: 12,
+              right: 12,
+              display: "flex",
+              gap: 6,
+              alignItems: "center",
+              padding: "5px 9px",
+              borderRadius: 9999,
+              backgroundColor: "rgba(0, 0, 0, 0.4)",
+              backdropFilter: "blur(4px)",
+            }}
+          >
+            {images.map((src, i) => (
+              <span
+                key={src}
+                style={{
+                  width: 5,
+                  height: 5,
+                  borderRadius: 9999,
+                  backgroundColor:
+                    i === slide
+                      ? "var(--color-brand)"
+                      : "rgba(255, 255, 255, 0.45)",
+                  transition: "background-color 240ms ease-out",
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Copy block — theme-adaptive surface, theme-adaptive text. */}
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          padding: "20px 22px",
+          flex: 1,
           display: "flex",
           flexDirection: "column",
-          justifyContent: "flex-end",
-          color: "#fff",
-          zIndex: 1,
+          padding: "18px 22px 20px",
+          backgroundColor: "var(--color-surface)",
         }}
       >
         <h3
           style={{
             fontFamily: "var(--font-sans)",
             fontWeight: 500,
-            fontSize: 22,
+            fontSize: 20,
+            lineHeight: 1.2,
             letterSpacing: "-0.01em",
-            lineHeight: 1.15,
+            color: "var(--color-text-primary)",
           }}
         >
           {title}
@@ -220,7 +227,7 @@ export function ProjectShowcasePanel({
             fontSize: 13,
             lineHeight: 1.4,
             marginTop: 4,
-            color: "rgba(255,255,255,0.82)",
+            color: "var(--color-brand)",
           }}
         >
           {tagline}
@@ -228,45 +235,14 @@ export function ProjectShowcasePanel({
         <p
           style={{
             fontFamily: "var(--font-sans)",
-            fontSize: 12,
-            lineHeight: 1.5,
-            marginTop: 8,
-            color: "rgba(255,255,255,0.66)",
-            display: "-webkit-box",
-            WebkitLineClamp: 3,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
+            fontSize: 12.5,
+            lineHeight: 1.55,
+            marginTop: 10,
+            color: "var(--color-text-secondary)",
           }}
         >
           {description}
         </p>
-        <div
-          style={{
-            marginTop: 12,
-            display: "flex",
-            flexWrap: "wrap",
-            gap: 6,
-          }}
-        >
-          {tags.map((tag) => (
-            <span
-              key={tag}
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: 10,
-                color: "rgba(255,255,255,0.85)",
-                backgroundColor: "rgba(255,255,255,0.09)",
-                border: "1px solid rgba(255,255,255,0.16)",
-                padding: "2px 8px",
-                borderRadius: 4,
-                whiteSpace: "nowrap",
-                lineHeight: 1.5,
-              }}
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
       </div>
     </div>,
     document.body,
