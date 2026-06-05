@@ -229,7 +229,7 @@ imtiazx.com/
                         PageTransition, CustomCursor, Nav, Footer
     globals.css         all CSS custom properties and base styles
     page.tsx            homepage (8 sections listed above)
-    lab/page.tsx        Projects + Hackathons + Open Source tabs
+    lab/page.tsx        Projects + Hackathons tabs
     signal/page.tsx     Articles + Perspectives tabs
     stack/page.tsx      Tech categories with proficiency bars
     about/page.tsx      Bio + GitHub/LinkedIn + Timeline + Right Now
@@ -314,7 +314,7 @@ GitHub + LinkedIn shown on About page only (not in nav).
 
 ## Pages summary
 
-/lab -- Lab: Projects (status filter) + Hackathons + Open Source tabs
+/lab -- Lab: Projects (status filter) + Hackathons tabs
 /signal -- Signal: Articles (category filter) + Perspectives tabs
 /stack -- Stack: all tech categories, proficiency bars, usage notes
 /about -- About: Bio + social links + terminal CodeBlock + Timeline + Right Now cards

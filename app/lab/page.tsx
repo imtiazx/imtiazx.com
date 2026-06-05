@@ -2,20 +2,19 @@
 
 import { useMemo, useState } from "react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { Code2, ExternalLink } from "lucide-react";
+import { ExternalLink } from "lucide-react";
 import { projects, type ProjectStatus } from "@/lib/projects";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
 import { ProjectCard } from "@/components/ui/ProjectCard";
 import { ChipTag } from "@/components/ui/ChipTag";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 
-type Tab = "projects" | "hackathons" | "open-source";
+type Tab = "projects" | "hackathons";
 type ProjectFilter = "All" | ProjectStatus;
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: "projects", label: "Projects" },
   { id: "hackathons", label: "Hackathons" },
-  { id: "open-source", label: "Open Source" },
 ];
 
 const PROJECT_FILTERS: ProjectFilter[] = ["All", "Production", "Development", "Ideation"];
@@ -300,55 +299,6 @@ function HackathonsTab() {
   );
 }
 
-function OpenSourceTab() {
-  return (
-    <div
-      style={{
-        backgroundColor: "var(--color-surface)",
-        borderColor: "var(--color-border)",
-        borderRadius: 16,
-      }}
-      className="border flex flex-col items-center text-center px-6 py-20 md:py-28"
-    >
-      <div
-        style={{
-          backgroundColor: "var(--color-brand-light)",
-          color: "var(--color-brand)",
-        }}
-        className="inline-flex items-center justify-center rounded-full w-16 h-16 mb-6"
-      >
-        <Code2 size={28} />
-      </div>
-      <h3
-        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-primary)" }}
-        className="text-2xl md:text-3xl mb-3"
-      >
-        Coming soon
-      </h3>
-      <p
-        style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)", fontStyle: "italic" }}
-        className="text-sm md:text-base max-w-md leading-relaxed"
-      >
-        RAGScope and DocuAgent will appear here once their repositories are public.
-      </p>
-
-      <div className="flex items-center gap-2 mt-8">
-        <span
-          aria-hidden
-          className="live-dot inline-block"
-          style={{ width: 6, height: 6, borderRadius: "50%", backgroundColor: "var(--color-brand)" }}
-        />
-        <span
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
-          className="text-[10px] uppercase tracking-widest"
-        >
-          Open sourcing in progress
-        </span>
-      </div>
-    </div>
-  );
-}
-
 export default function LabPage() {
   const [tab, setTab] = useState<Tab>("projects");
   const prefersReducedMotion = useReducedMotion();
@@ -401,7 +351,6 @@ export default function LabPage() {
           >
             {tab === "projects" && <ProjectsTab />}
             {tab === "hackathons" && <HackathonsTab />}
-            {tab === "open-source" && <OpenSourceTab />}
           </motion.div>
         </AnimatePresence>
       </div>
