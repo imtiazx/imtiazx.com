@@ -17,20 +17,34 @@ export interface Project {
   tags: string[];
   accentColor: string;
   links: ProjectLinks;
+  // When set, hovering the card opens a cursor-following preview panel that
+  // crossfades through these images. Paths are public/ relative.
+  showcaseImages?: string[];
 }
 
 export const projects: Project[] = [
   {
     id: "ragscope",
     title: "RAGScope",
-    subtitle: "Open-source evaluation framework for production RAG pipelines",
+    subtitle: "Benchmarking harness for RAG retrieval strategies.",
     status: "Production",
     origin: "Open source",
     description:
-      "A modular evaluation framework for assessing RAG pipeline quality across faithfulness, context recall, and answer relevance. Ships with CLI tooling, CI integration hooks, and support for OpenAI, Anthropic, and open-weight models as judges.",
-    tags: ["Python", "LangChain", "OpenAI", "RAGAS", "Evaluation", "CLI"],
+      "Upload a corpus, run it through 4 retrieval strategies (Naive, HyDE, Multi-query, Hybrid BM25 + dense), and see which wins on faithfulness, context utilization, and answer relevancy. Deterministic eval pipeline, not an agent.",
+    tags: ["FastAPI", "Next.js", "pgvector", "RAGAS", "OpenAI", "Supabase"],
     accentColor: "var(--color-teal)",
-    links: { live: null, code: null, trailer: null, docs: null },
+    links: {
+      live: "https://ragscope.vercel.app",
+      code: "https://github.com/imtiazx/ragscope",
+      trailer: null,
+      docs: "https://github.com/imtiazx/ragscope/blob/main/docs/RAGScope_Reference.pdf",
+    },
+    showcaseImages: [
+      "/projects/ragscope/01-overview.webp",
+      "/projects/ragscope/02-strategies.webp",
+      "/projects/ragscope/03-metrics.webp",
+      "/projects/ragscope/04-report.webp",
+    ],
   },
   {
     id: "docuagent",

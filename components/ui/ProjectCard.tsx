@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 // Lucide dropped its brand icons, so there is no Github glyph in this version;
 // Code2 (the </> mark) is the closest match for the "Code" repo link.
@@ -8,6 +8,7 @@ import { ExternalLink, Code2, Play, BookOpen } from "lucide-react";
 import type { Project, ProjectLinks } from "@/lib/projects";
 import { StatusBadge } from "./StatusBadge";
 import { ChipTag } from "./ChipTag";
+import { ProjectShowcasePanel } from "./ProjectShowcasePanel";
 
 interface ProjectCardProps {
   project: Project;
@@ -29,11 +30,28 @@ const LINK_BASE =
 export function ProjectCard({ project }: ProjectCardProps) {
   const prefersReducedMotion = useReducedMotion();
   const [hovered, setHovered] = useState(false);
+  const hasShowcase = (project.showcaseImages?.length ?? 0) > 0;
+  // Mouse position is written to a ref (no re-renders); the showcase panel
+  // reads it inside its own rAF loop.
+  const mouseRef = useRef({ x: 0, y: 0 });
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLDivElement>) => {
+    setHovered(true);
+    if (hasShowcase) mouseRef.current = { x: e.clientX, y: e.clientY };
+  };
+  const handleMouseLeave = () => setHovered(false);
+  const handleMouseMove = hasShowcase
+    ? (e: React.MouseEvent<HTMLDivElement>) => {
+        mouseRef.current = { x: e.clientX, y: e.clientY };
+      }
+    : undefined;
 
   return (
+    <>
     <motion.div
-      onHoverStart={() => setHovered(true)}
-      onHoverEnd={() => setHovered(false)}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+      onMouseMove={handleMouseMove}
       whileHover={prefersReducedMotion ? {} : { y: -3 }}
       transition={{ duration: 0.2, ease: "easeOut" }}
       style={{
@@ -135,5 +153,17 @@ export function ProjectCard({ project }: ProjectCardProps) {
         </div>
       </div>
     </motion.div>
+    {hasShowcase && (
+      <ProjectShowcasePanel
+        visible={hovered}
+        mouseRef={mouseRef}
+        title={project.title}
+        tagline={project.subtitle}
+        description={project.description}
+        tags={project.tags}
+        images={project.showcaseImages!}
+      />
+    )}
+    </>
   );
 }
