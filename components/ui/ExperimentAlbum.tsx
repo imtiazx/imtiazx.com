@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Pause, Play, Volume2, VolumeX } from "lucide-react";
 import type {
   ExperimentAlbum as Album,
   ExperimentPiece,
 } from "@/lib/experiments";
+import { useSound } from "@/components/providers/SoundProvider";
 
 interface ExperimentAlbumProps {
   album: Album;
@@ -23,7 +24,7 @@ export function ExperimentAlbum({ album }: ExperimentAlbumProps) {
         borderColor: "var(--color-border)",
         borderRadius: 16,
       }}
-      className="border p-6 md:p-10"
+      className="border p-6 md:p-10 flex flex-col lg:min-h-[calc(100vh-260px)]"
     >
       <header className="mb-8 md:mb-10">
         <h2
@@ -47,7 +48,7 @@ export function ExperimentAlbum({ album }: ExperimentAlbumProps) {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:auto-rows-fr flex-1">
         {album.pieces.map((piece) => (
           <PieceTile
             key={piece.id}
@@ -83,28 +84,22 @@ function PieceTile({
         borderRadius: 14,
       }}
       className={
-        "border p-4 md:p-5 flex gap-5 transition-[border-color,box-shadow] duration-200 " +
-        // Vertical reel sits beside its meta; horizontal still stacks meta below.
-        (isVideo
-          ? "flex-row items-stretch"
-          : "flex-col items-stretch")
+        "border p-4 md:p-5 h-full transition-[border-color,box-shadow] duration-200 flex " +
+        // Reel sits beside its meta; still stacks meta below the wide image.
+        (isVideo ? "flex-row gap-5" : "flex-col gap-4")
       }
     >
-      <MediaFrame piece={piece} prefersReducedMotion={prefersReducedMotion} />
+      {isVideo ? (
+        <ReelMedia piece={piece} prefersReducedMotion={prefersReducedMotion} />
+      ) : (
+        <StillMedia piece={piece} />
+      )}
       <Meta piece={piece} />
     </motion.article>
   );
 }
 
-function MediaFrame({
-  piece,
-  prefersReducedMotion,
-}: {
-  piece: ExperimentPiece;
-  prefersReducedMotion: boolean;
-}) {
-  const isVideo = piece.media.kind === "video";
-
+function StillMedia({ piece }: { piece: ExperimentPiece }) {
   return (
     <div
       style={{
@@ -112,49 +107,43 @@ function MediaFrame({
         borderRadius: 10,
         backgroundColor: "var(--color-bg)",
       }}
-      className={
-        "border overflow-hidden flex-shrink-0 " +
-        (isVideo
-          // Reel: fixed-width column, fills available height via aspect ratio.
-          ? "w-[44%] max-w-[260px] self-stretch"
-          // Still: full width of its column, height driven by aspect ratio.
-          : "w-full")
-      }
+      className="border overflow-hidden w-full"
     >
-      {isVideo ? (
-        <ReelPlayer piece={piece} prefersReducedMotion={prefersReducedMotion} />
-      ) : (
-        <Image
-          src={piece.media.src}
-          alt={piece.media.alt}
-          width={piece.media.width}
-          height={piece.media.height}
-          sizes="(min-width: 1024px) 40vw, 90vw"
-          className="block w-full h-auto"
-          priority={false}
-        />
-      )}
+      <Image
+        src={piece.media.src}
+        alt={piece.media.alt}
+        width={piece.media.width}
+        height={piece.media.height}
+        sizes="(min-width: 1024px) 40vw, 90vw"
+        className="block w-full h-auto"
+        priority={false}
+      />
     </div>
   );
 }
 
-function ReelPlayer({
+function ReelMedia({
   piece,
   prefersReducedMotion,
 }: {
   piece: ExperimentPiece;
   prefersReducedMotion: boolean;
 }) {
+  const containerRef = useRef<HTMLDivElement | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const { duckMusic } = useSound();
+
   const [inView, setInView] = useState(false);
+  const [playing, setPlaying] = useState(false);
+  const [muted, setMuted] = useState(true);
+  // While the reel owns the audio channel, hold the release fn returned by
+  // duckMusic. Releasing it lets the ambient music resume.
+  const releaseAudioRef = useRef<(() => void) | null>(null);
 
-  // Autoplay only when the reel is on-screen. Pause when it scrolls out so
-  // off-screen videos don't burn CPU or battery.
+  // Autoplay-on-view. Pauses when scrolled off screen; resumes when back.
   useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
-    if (prefersReducedMotion) return;
-
+    const el = containerRef.current;
+    if (!el || prefersReducedMotion) return;
     const io = new IntersectionObserver(
       ([entry]) => setInView(entry.isIntersecting),
       { threshold: 0.4 },
@@ -164,37 +153,132 @@ function ReelPlayer({
   }, [prefersReducedMotion]);
 
   useEffect(() => {
-    const el = videoRef.current;
-    if (!el) return;
+    const v = videoRef.current;
+    if (!v) return;
     if (prefersReducedMotion) {
-      el.pause();
+      v.pause();
+      setPlaying(false);
       return;
     }
-    if (inView) {
-      void el.play().catch(() => {
-        // Autoplay can be blocked (e.g. low-power mode). Poster stays visible;
-        // user can tap to play.
-      });
-    } else {
-      el.pause();
+    if (inView && v.paused) {
+      void v.play().then(() => setPlaying(true)).catch(() => {});
+    } else if (!inView && !v.paused) {
+      v.pause();
+      setPlaying(false);
     }
   }, [inView, prefersReducedMotion]);
 
+  // Release the duck on unmount so the music isn't stranded paused if the
+  // user navigates away mid-listen.
+  useEffect(() => {
+    return () => {
+      releaseAudioRef.current?.();
+      releaseAudioRef.current = null;
+    };
+  }, []);
+
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    if (v.paused) {
+      void v.play().then(() => setPlaying(true)).catch(() => {});
+    } else {
+      v.pause();
+      setPlaying(false);
+    }
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    const nextMuted = !v.muted;
+    v.muted = nextMuted;
+    setMuted(nextMuted);
+
+    if (nextMuted) {
+      releaseAudioRef.current?.();
+      releaseAudioRef.current = null;
+    } else {
+      // Unmuting requires a user gesture (this click) -- duck the ambient
+      // music and ensure the video is actually playing audibly.
+      if (!releaseAudioRef.current) releaseAudioRef.current = duckMusic();
+      if (v.paused) void v.play().then(() => setPlaying(true)).catch(() => {});
+    }
+  }, [duckMusic]);
+
   return (
-    <video
-      ref={videoRef}
-      src={piece.media.src}
-      poster={piece.media.poster}
-      muted
-      loop
-      playsInline
-      preload="metadata"
-      aria-label={piece.media.alt}
+    <div
+      ref={containerRef}
       style={{
+        borderColor: "var(--color-border)",
+        borderRadius: 10,
+        backgroundColor: "#000",
         aspectRatio: `${piece.media.width} / ${piece.media.height}`,
       }}
-      className="block w-full h-full object-cover"
-    />
+      className="relative border overflow-hidden flex-shrink-0 self-stretch h-full w-auto group"
+    >
+      <video
+        ref={videoRef}
+        src={piece.media.src}
+        poster={piece.media.poster}
+        muted
+        loop
+        playsInline
+        preload="metadata"
+        aria-label={piece.media.alt}
+        onClick={togglePlay}
+        className="block w-full h-full object-cover cursor-pointer"
+      />
+
+      <div
+        className="absolute left-0 right-0 bottom-0 px-3 pb-3 pt-8 flex items-center gap-2 pointer-events-none opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+        style={{
+          background:
+            "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)",
+        }}
+      >
+        <ControlButton
+          label={playing ? "Pause" : "Play"}
+          onClick={togglePlay}
+        >
+          {playing ? <Pause size={14} /> : <Play size={14} />}
+        </ControlButton>
+        <ControlButton
+          label={muted ? "Unmute (will pause site music)" : "Mute"}
+          onClick={toggleMute}
+        >
+          {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+        </ControlButton>
+      </div>
+    </div>
+  );
+}
+
+function ControlButton({
+  label,
+  onClick,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      aria-label={label}
+      title={label}
+      style={{
+        backgroundColor: "rgba(255, 255, 255, 0.12)",
+        color: "#FAFAF9",
+        backdropFilter: "blur(6px)",
+        borderColor: "rgba(255, 255, 255, 0.18)",
+      }}
+      className="pointer-events-auto inline-flex items-center justify-center w-8 h-8 rounded-full border transition-colors hover:bg-[rgba(255,255,255,0.22)]"
+    >
+      {children}
+    </button>
   );
 }
 

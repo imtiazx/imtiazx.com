@@ -28,11 +28,17 @@ const CLICK_SRC = "/audio/click.wav";
 interface SoundContextValue {
   mode: SoundMode;
   cycleMode: () => void;
+  // Pause the ambient music so an external player (e.g. an unmuted experiment
+  // reel) can own the audio channel. Returns a release function that restores
+  // the music if mode is still "full". Calls nest: the music only resumes
+  // after every active duck has released.
+  duckMusic: () => () => void;
 }
 
 const SoundContext = createContext<SoundContextValue>({
   mode: DEFAULT_MODE,
   cycleMode: () => {},
+  duckMusic: () => () => {},
 });
 
 function fadeTo(audio: HTMLAudioElement, target: number, ms: number) {
@@ -63,6 +69,9 @@ export function SoundProvider({ children }: { children: ReactNode }) {
   // without waiting for React to commit. Updated by cycleMode itself before
   // calling setMode so rapid double-clicks chain through the cycle correctly.
   const modeRef = useRef<SoundMode>(DEFAULT_MODE);
+  // Active duck count. Music stays paused as long as this is > 0, regardless
+  // of mode. Resumes (if mode === "full") when it drops back to 0.
+  const duckCountRef = useRef(0);
 
   useEffect(() => {
     try {
@@ -128,7 +137,7 @@ export function SoundProvider({ children }: { children: ReactNode }) {
         });
     };
 
-    if (mode === "full") {
+    if (mode === "full" && duckCountRef.current === 0) {
       // cycleMode already kicks playback off inside the user-gesture stack
       // frame (Safari needs that). Only re-attempt here for the initial-mount
       // case: a returning visitor whose stored mode is already "full" but who
@@ -198,8 +207,29 @@ export function SoundProvider({ children }: { children: ReactNode }) {
     setMode(next);
   }, []);
 
+  const duckMusic = useCallback(() => {
+    duckCountRef.current += 1;
+    const music = musicRef.current;
+    if (music && !music.paused) fadeTo(music, 0, MUSIC_FADE_MS);
+
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      duckCountRef.current = Math.max(0, duckCountRef.current - 1);
+      if (duckCountRef.current > 0) return;
+      const m = musicRef.current;
+      if (!m) return;
+      if (modeRef.current !== "full") return;
+      m.volume = 0;
+      m.play()
+        .then(() => fadeTo(m, MUSIC_VOLUME, MUSIC_FADE_MS))
+        .catch(() => {});
+    };
+  }, []);
+
   return (
-    <SoundContext.Provider value={{ mode, cycleMode }}>
+    <SoundContext.Provider value={{ mode, cycleMode, duckMusic }}>
       {children}
     </SoundContext.Provider>
   );
