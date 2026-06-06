@@ -5,16 +5,19 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { projects, type ProjectStatus } from "@/lib/projects";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
+import { albums } from "@/lib/experiments";
 import { ProjectCard } from "@/components/ui/ProjectCard";
 import { ChipTag } from "@/components/ui/ChipTag";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
+import { ExperimentAlbum } from "@/components/ui/ExperimentAlbum";
 
-type Tab = "projects" | "hackathons";
+type Tab = "projects" | "hackathons" | "experiments";
 type ProjectFilter = "All" | ProjectStatus;
 
 const TABS: Array<{ id: Tab; label: string }> = [
   { id: "projects", label: "Projects" },
   { id: "hackathons", label: "Hackathons" },
+  { id: "experiments", label: "Experiment" },
 ];
 
 const PROJECT_FILTERS: ProjectFilter[] = ["All", "Production", "Development", "Ideation"];
@@ -299,6 +302,16 @@ function HackathonsTab() {
   );
 }
 
+function ExperimentsTab() {
+  return (
+    <div className="flex flex-col gap-12">
+      {albums.map((album) => (
+        <ExperimentAlbum key={album.id} album={album} />
+      ))}
+    </div>
+  );
+}
+
 export default function LabPage() {
   const [tab, setTab] = useState<Tab>("projects");
   const prefersReducedMotion = useReducedMotion();
@@ -351,6 +364,7 @@ export default function LabPage() {
           >
             {tab === "projects" && <ProjectsTab />}
             {tab === "hackathons" && <HackathonsTab />}
+            {tab === "experiments" && <ExperimentsTab />}
           </motion.div>
         </AnimatePresence>
       </div>
