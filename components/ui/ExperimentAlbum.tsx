@@ -24,7 +24,7 @@ export function ExperimentAlbum({ album }: ExperimentAlbumProps) {
         borderColor: "var(--color-border)",
         borderRadius: 16,
       }}
-      className="border p-6 md:p-10 flex flex-col lg:min-h-[calc(100vh-260px)]"
+      className="border p-6 md:p-10"
     >
       <header className="mb-8 md:mb-10">
         <h2
@@ -48,7 +48,7 @@ export function ExperimentAlbum({ album }: ExperimentAlbumProps) {
         </p>
       </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:auto-rows-fr flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-10 lg:auto-rows-fr">
         {album.pieces.map((piece) => (
           <PieceTile
             key={piece.id}
@@ -215,7 +215,7 @@ function ReelMedia({
         backgroundColor: "#000",
         aspectRatio: `${piece.media.width} / ${piece.media.height}`,
       }}
-      className="relative border overflow-hidden flex-shrink-0 self-stretch h-full w-auto group"
+      className="relative border overflow-hidden flex-shrink-0 w-[200px] sm:w-[220px] md:w-[240px] group"
     >
       <video
         ref={videoRef}
