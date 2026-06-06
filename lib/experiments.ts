@@ -32,6 +32,27 @@ export interface ExperimentAlbum {
   pieces: ExperimentPiece[];
 }
 
+// Standalone experiments live outside any album. Use for forward-looking or
+// in-progress work that doesn't belong with a curated set of finished pieces.
+export type ExperimentStandaloneStatus = "Ongoing" | "Planned";
+
+export interface ExperimentStandaloneMedia {
+  src: string;
+  width: number;
+  height: number;
+  alt: string;
+}
+
+export interface ExperimentStandalone {
+  id: string;
+  title: string;
+  status: ExperimentStandaloneStatus;
+  // Paragraphs render with vertical spacing between them.
+  description: string[];
+  timeline: string;
+  poster: ExperimentStandaloneMedia;
+}
+
 export const albums: ExperimentAlbum[] = [
   {
     id: "origins",
@@ -75,5 +96,24 @@ export const albums: ExperimentAlbum[] = [
         sourceLabel: "View on Instagram (May 2022)",
       },
     ],
+  },
+];
+
+export const standalones: ExperimentStandalone[] = [
+  {
+    id: "unpredictable-human",
+    title: "The Unpredictable Human",
+    status: "Ongoing",
+    description: [
+      "This experiment explores how well machine learning can predict a human whose behavior intentionally changes over time. Early findings suggest that predicting humans is difficult, especially when the human is also the researcher.",
+      "The current challenge is determining whether the models are failing because of concept drift, hidden states, or my occasional ability to surprise myself.",
+    ],
+    timeline: "Ongoing experiment · Expected release end of 2026",
+    poster: {
+      src: "/experiments/the-unpredictable-human.png",
+      width: 1536,
+      height: 1024,
+      alt: "The Unpredictable Human: conceptual cover image for an ongoing experiment on machine-learning predictions of intentionally-changing human behavior.",
+    },
   },
 ];

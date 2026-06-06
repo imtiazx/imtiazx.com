@@ -3,7 +3,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { motion, useReducedMotion } from "framer-motion";
-import { ExternalLink, Pause, Play, Volume2, VolumeX } from "lucide-react";
+import {
+  ExternalLink,
+  Maximize2,
+  Minimize2,
+  Pause,
+  Play,
+  Volume2,
+  VolumeX,
+} from "lucide-react";
 import type {
   ExperimentAlbum as Album,
   ExperimentPiece,
@@ -136,6 +144,7 @@ function ReelMedia({
   const [inView, setInView] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [muted, setMuted] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
   // While the reel owns the audio channel, hold the release fn returned by
   // duckMusic. Releasing it lets the ambient music resume.
   const releaseAudioRef = useRef<(() => void) | null>(null);
@@ -188,6 +197,25 @@ function ReelMedia({
     }
   }, []);
 
+  // Track fullscreen state so the button can swap between enter / exit icons,
+  // including when the user exits via the Esc key (no click event fires).
+  useEffect(() => {
+    const onChange = () =>
+      setIsFullscreen(document.fullscreenElement === containerRef.current);
+    document.addEventListener("fullscreenchange", onChange);
+    return () => document.removeEventListener("fullscreenchange", onChange);
+  }, []);
+
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement) {
+      void document.exitFullscreen().catch(() => {});
+    } else {
+      void el.requestFullscreen().catch(() => {});
+    }
+  }, []);
+
   const toggleMute = useCallback(() => {
     const v = videoRef.current;
     if (!v) return;
@@ -210,12 +238,19 @@ function ReelMedia({
     <div
       ref={containerRef}
       style={{
-        borderColor: "var(--color-border)",
-        borderRadius: 10,
+        borderColor: isFullscreen ? "transparent" : "var(--color-border)",
+        borderRadius: isFullscreen ? 0 : 10,
         backgroundColor: "#000",
-        aspectRatio: `${piece.media.width} / ${piece.media.height}`,
+        aspectRatio: isFullscreen
+          ? undefined
+          : `${piece.media.width} / ${piece.media.height}`,
       }}
-      className="relative border overflow-hidden flex-shrink-0 w-[200px] sm:w-[220px] md:w-[240px] group"
+      className={
+        "relative border overflow-hidden flex-shrink-0 group " +
+        (isFullscreen
+          ? "w-screen h-screen"
+          : "w-[200px] sm:w-[220px] md:w-[240px]")
+      }
     >
       <video
         ref={videoRef}
@@ -227,11 +262,21 @@ function ReelMedia({
         preload="metadata"
         aria-label={piece.media.alt}
         onClick={togglePlay}
-        className="block w-full h-full object-cover cursor-pointer"
+        className={
+          "block w-full h-full cursor-pointer " +
+          (isFullscreen ? "object-contain" : "object-cover")
+        }
       />
 
       <div
-        className="absolute left-0 right-0 bottom-0 px-3 pb-3 pt-8 flex items-center gap-2 pointer-events-none opacity-0 group-hover:opacity-100 focus-within:opacity-100 transition-opacity duration-200"
+        className={
+          "absolute left-0 right-0 bottom-0 px-3 pb-3 pt-8 flex items-center gap-2 pointer-events-none transition-opacity duration-200 " +
+          // Always visible in fullscreen (otherwise the user can't exit
+          // without hitting Esc); hover-revealed at normal size.
+          (isFullscreen
+            ? "opacity-100"
+            : "opacity-0 group-hover:opacity-100 focus-within:opacity-100")
+        }
         style={{
           background:
             "linear-gradient(to top, rgba(0,0,0,0.65) 0%, rgba(0,0,0,0) 100%)",
@@ -248,6 +293,12 @@ function ReelMedia({
           onClick={toggleMute}
         >
           {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+        </ControlButton>
+        <ControlButton
+          label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+          onClick={toggleFullscreen}
+        >
+          {isFullscreen ? <Minimize2 size={14} /> : <Maximize2 size={14} />}
         </ControlButton>
       </div>
     </div>

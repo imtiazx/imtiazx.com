@@ -5,11 +5,12 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { projects, type ProjectStatus } from "@/lib/projects";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
-import { albums } from "@/lib/experiments";
+import { albums, standalones } from "@/lib/experiments";
 import { ProjectCard } from "@/components/ui/ProjectCard";
 import { ChipTag } from "@/components/ui/ChipTag";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
 import { ExperimentAlbum } from "@/components/ui/ExperimentAlbum";
+import { ExperimentStandaloneCard } from "@/components/ui/ExperimentStandaloneCard";
 
 type Tab = "projects" | "hackathons" | "experiments";
 type ProjectFilter = "All" | ProjectStatus;
@@ -307,6 +308,9 @@ function ExperimentsTab() {
     <div className="flex flex-col gap-12">
       {albums.map((album) => (
         <ExperimentAlbum key={album.id} album={album} />
+      ))}
+      {standalones.map((exp) => (
+        <ExperimentStandaloneCard key={exp.id} experiment={exp} />
       ))}
     </div>
   );
