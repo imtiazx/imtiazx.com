@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { Suspense, useCallback, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ExternalLink } from "lucide-react";
 import { projects, type ProjectStatus } from "@/lib/projects";
@@ -20,6 +21,13 @@ const TABS: Array<{ id: Tab; label: string }> = [
   { id: "hackathons", label: "Hackathons" },
   { id: "experiments", label: "Experiment" },
 ];
+
+const VALID_TAB_IDS = new Set<Tab>(TABS.map((t) => t.id));
+const DEFAULT_TAB: Tab = "projects";
+
+function parseTab(value: string | null): Tab {
+  return value && VALID_TAB_IDS.has(value as Tab) ? (value as Tab) : DEFAULT_TAB;
+}
 
 const PROJECT_FILTERS: ProjectFilter[] = ["All", "Production", "Development", "Ideation"];
 
@@ -316,33 +324,31 @@ function ExperimentsTab() {
   );
 }
 
-export default function LabPage() {
-  const [tab, setTab] = useState<Tab>("projects");
+function LabTabs() {
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const prefersReducedMotion = useReducedMotion();
 
-  return (
-    <main className="container py-20">
-      <ScrollReveal variant="fadeUp">
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontWeight: 500,
-            color: "var(--color-text-primary)",
-          }}
-          className="text-4xl md:text-5xl lg:text-6xl"
-        >
-          Lab
-        </h1>
-      </ScrollReveal>
-      <ScrollReveal variant="fadeUp" delay={0.05}>
-        <p
-          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
-          className="mt-3 text-base md:text-lg max-w-2xl"
-        >
-          Everything I build, compete in, and ship.
-        </p>
-      </ScrollReveal>
+  const [tab, setTabState] = useState<Tab>(() =>
+    parseTab(searchParams.get("tab")),
+  );
 
+  const setTab = useCallback(
+    (next: Tab) => {
+      setTabState(next);
+      const params = new URLSearchParams(searchParams.toString());
+      if (next === DEFAULT_TAB) params.delete("tab");
+      else params.set("tab", next);
+      const qs = params.toString();
+      // scroll: false keeps the user where they were when toggling tabs.
+      router.replace(`${pathname}${qs ? `?${qs}` : ""}`, { scroll: false });
+    },
+    [pathname, router, searchParams],
+  );
+
+  return (
+    <>
       <div
         className="mt-10 flex flex-wrap gap-6 md:gap-8"
         style={{ borderBottom: "1px solid var(--color-border)" }}
@@ -372,6 +378,40 @@ export default function LabPage() {
           </motion.div>
         </AnimatePresence>
       </div>
+    </>
+  );
+}
+
+export default function LabPage() {
+  return (
+    <main className="container py-20">
+      <ScrollReveal variant="fadeUp">
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontWeight: 500,
+            color: "var(--color-text-primary)",
+          }}
+          className="text-4xl md:text-5xl lg:text-6xl"
+        >
+          Lab
+        </h1>
+      </ScrollReveal>
+      <ScrollReveal variant="fadeUp" delay={0.05}>
+        <p
+          style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
+          className="mt-3 text-base md:text-lg max-w-2xl"
+        >
+          Everything I build, compete in, and ship.
+        </p>
+      </ScrollReveal>
+
+      {/* useSearchParams forces dynamic rendering up to the closest Suspense
+          boundary; this keeps the header static while only the tab UI hydrates
+          off the URL. */}
+      <Suspense fallback={null}>
+        <LabTabs />
+      </Suspense>
     </main>
   );
 }
