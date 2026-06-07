@@ -3,7 +3,7 @@
 import { Suspense, useCallback, useMemo, useState } from "react";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import { ExternalLink, Code2 } from "lucide-react";
 import { projects, type ProjectStatus } from "@/lib/projects";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
 import { albums, standalones } from "@/lib/experiments";
@@ -202,7 +202,7 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
       </div>
 
       <div
-        className="pt-4 mt-auto"
+        className="pt-4 mt-auto flex flex-wrap gap-2"
         style={{ borderTop: "1px solid var(--color-border)" }}
       >
         {h.competitionUrl ? (
@@ -233,6 +233,22 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
             <ExternalLink size={13} />
             View competition
           </span>
+        )}
+        {h.repoUrl && (
+          <a
+            href={h.repoUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              fontFamily: "var(--font-sans)",
+              color: "var(--color-text-muted)",
+              borderColor: "var(--color-border)",
+            }}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] bg-transparent transition-colors duration-150 hover:border-[var(--color-brand)] hover:text-[var(--color-brand)]"
+          >
+            <Code2 size={13} />
+            View code
+          </a>
         )}
       </div>
     </motion.article>

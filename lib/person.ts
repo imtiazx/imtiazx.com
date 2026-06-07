@@ -34,12 +34,12 @@ export const person: Person = {
   preferredName: "Imtiaz",
   handle: "imtiazx",
   tagline: "I engineer AI systems from prototype to production.",
-  bio: "Imtiaz is an AI engineer at Accenture Industry X working on Generative AI R&D, where he builds RAG systems, agentic pipelines, and responsible AI evaluation tooling for enterprise deployment. His track record spans production rollouts across 25+ enterprise GenAI studies, open-source contributions to AI infrastructure, and podium finishes at global hackathons including 3rd place at LangFlow. He focuses on closing the gap between research prototypes and reliable, evaluated systems that engineering teams can actually ship.",
+  bio: "Imtiaz is an AI engineer at Accenture Industry X working on Generative AI R&D, where he builds RAG systems, agentic pipelines, and responsible AI evaluation tooling for enterprise deployment. His track record spans production rollouts across 25+ enterprise GenAI studies, open-source contributions to AI infrastructure, and podium finishes at global hackathons including 3rd of 12,000+ at the AI Devs India LangFlow Challenge. He focuses on closing the gap between research prototypes and reliable, evaluated systems that engineering teams can actually ship.",
   metrics: [
     { value: "~5", label: "Years shipping production AI" },
     { value: "25+", label: "Enterprise GenAI studies" },
     { value: "75%", label: "Effort reduction delivered" },
-    { value: "3rd", label: "LangFlow global hackathon" },
+    { value: "3rd", label: "AI Devs India LangFlow Challenge (12,000+)" },
   ],
   identityCards: [
     {

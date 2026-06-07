@@ -159,8 +159,8 @@ function BioSection() {
             >
               Off the clock he is an open-source builder and Linux loyalist, with strong opinions
               about nuclear energy as the only honest answer to AI&apos;s power problem and about
-              information that wants to be free. 3rd place at the LangFlow global hackathon, and
-              he&apos;ll bring it up when it&apos;s relevant.
+              information that wants to be free. 3rd of 12,000+ at the AI Devs India LangFlow
+              Challenge, and he&apos;ll bring it up when it&apos;s relevant.
             </p>
           </ScrollReveal>
           <ScrollReveal variant="fadeUp" delay={0.15}>
@@ -222,9 +222,9 @@ const TIMELINE: TimelineEntry[] = [
   },
   {
     date: "2024",
-    title: "LangFlow Global Hackathon -- 3rd Place",
+    title: "AI Devs India LangFlow Challenge -- 3rd of 12,000+",
     description:
-      "Built a multi-agent orchestration system for dynamic task decomposition. Placed 3rd globally.",
+      "Implemented advanced prompt engineering techniques within LangFlow workflows. Live AI engineering challenge across India. Prize: ₹25,000.",
   },
   {
     date: "2024",

@@ -61,11 +61,11 @@ export const projects: Project[] = [
   {
     id: "langflow-multi-agent",
     title: "LangFlow Multi-Agent System",
-    subtitle: "3rd place at the LangFlow global hackathon",
+    subtitle: "3rd of 12,000+ at the AI Devs India LangFlow Challenge",
     status: "Ideation",
     origin: "Hackathon",
     description:
-      "A multi-agent orchestration system built on LangFlow that enables collaborative task decomposition across specialized sub-agents. Earned 3rd place in the LangFlow global hackathon for its approach to dynamic agent routing and shared memory.",
+      "A multi-agent orchestration system built on LangFlow that enables collaborative task decomposition across specialized sub-agents. Earned 3rd of 12,000+ in the AI Devs India LangFlow Challenge for its approach to dynamic agent routing and shared memory.",
     tags: ["LangFlow", "Python", "Multi-agent", "Orchestration", "OpenAI"],
     accentColor: "var(--color-purple)",
     links: { live: null, code: null, trailer: null, docs: null },
