@@ -7,7 +7,8 @@ import {
   useReducedMotion,
   type Variants,
 } from "framer-motion";
-import { ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, ExternalLink } from "lucide-react";
 import { hackathons, type Hackathon } from "@/lib/hackathons";
 import { ChipTag } from "@/components/ui/ChipTag";
 import { ScrollReveal } from "@/components/ui/ScrollReveal";
@@ -446,6 +447,17 @@ export function HackathonsSection() {
           {active && <ActiveCard h={active} />}
           {completed && <CompletedCard h={completed} />}
         </motion.div>
+
+        <div className="mt-12 flex justify-end">
+          <Link
+            href="/lab?tab=hackathons"
+            style={{ color: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
+            className="inline-flex items-center gap-2 text-sm font-medium hover:gap-3 transition-all duration-150"
+          >
+            Check all hackathons
+            <ArrowRight size={16} />
+          </Link>
+        </div>
       </div>
     </section>
   );
