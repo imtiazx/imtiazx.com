@@ -230,7 +230,7 @@ const TIMELINE: TimelineEntry[] = [
     date: "2024",
     title: "Kaggle Competitor",
     description:
-      "Rogii Wellbore Geology Prediction, currently rank #115 on the public leaderboard.",
+      "Rogii Wellbore Geology Prediction, currently rank #276 (Top 10%) on the public leaderboard.",
   },
   {
     date: "2023 - Present",
@@ -384,7 +384,7 @@ const FOCUS_CARDS: FocusCard[] = [
   {
     label: "Competing",
     title: "Rogii Wellbore Geology",
-    description: "Kaggle competition, currently rank #115 on the public leaderboard.",
+    description: "Kaggle competition, currently rank #276 (Top 10%) on the public leaderboard.",
     status: "Live",
   },
   {

@@ -297,6 +297,18 @@ function ActiveCard({ h }: { h: Hackathon }) {
         >
           {h.rank ?? "--"}
         </div>
+        {h.placement && (
+          <div
+            style={{
+              fontFamily: "var(--font-sans)",
+              color: "var(--color-brand)",
+              fontSize: 13,
+            }}
+            className="mt-2"
+          >
+            {h.placement}
+          </div>
+        )}
         <div
           style={{
             fontFamily: "var(--font-sans)",

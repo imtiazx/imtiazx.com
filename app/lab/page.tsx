@@ -160,6 +160,14 @@ function HackathonDetailCard({ h }: { h: Hackathon }) {
           >
             #{h.rank}
           </div>
+          {h.placement && (
+            <div
+              style={{ fontFamily: "var(--font-sans)", color: "var(--color-brand)", fontSize: 13 }}
+              className="mt-1"
+            >
+              {h.placement}
+            </div>
+          )}
           <div
             style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)", fontSize: 11 }}
             className="mt-1 uppercase tracking-wider"
