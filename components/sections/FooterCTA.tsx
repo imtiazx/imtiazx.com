@@ -67,7 +67,26 @@ export function FooterCTA() {
   const [email, setEmail] = useState("");
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
-  const [notice, setNotice] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+
+  async function handleSubmit() {
+    setStatus("sending");
+    const res = await fetch("/api/contact", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, subject, message }),
+    });
+    setStatus(res.ok ? "sent" : "error");
+  }
+
+  const buttonLabel =
+    status === "sending"
+      ? "Sending..."
+      : status === "sent"
+      ? "Message Sent"
+      : status === "error"
+      ? "Failed -- try again"
+      : "Send Message";
 
   return (
     <section className="relative overflow-hidden py-24 lg:py-32">
@@ -123,21 +142,13 @@ export function FooterCTA() {
             <div className="flex flex-wrap items-center gap-4">
               <button
                 type="button"
-                onClick={() => setNotice("Form coming soon. Email me directly.")}
+                onClick={handleSubmit}
+                disabled={status === "sending"}
                 style={{ backgroundColor: "var(--color-brand)", fontFamily: "var(--font-sans)" }}
-                className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90"
+                className="inline-flex items-center rounded-lg px-6 py-2.5 text-sm font-medium text-white transition-opacity duration-150 hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                Send Message
+                {buttonLabel}
               </button>
-              {notice && (
-                <span
-                  role="status"
-                  style={{ fontFamily: "var(--font-sans)", color: "var(--color-text-muted)" }}
-                  className="text-sm"
-                >
-                  {notice}
-                </span>
-              )}
             </div>
           </div>
         </div>
